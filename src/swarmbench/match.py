@@ -82,12 +82,13 @@ def run_match(
     scenario: Scenario | None = None,
     soft_deadline: float = 0.5,
     hard_timeout: float = 5.0,
+    backend: str = "local",
 ) -> MatchResult:
     path_a, path_b = Path(controller_a_path).resolve(), Path(controller_b_path).resolve()
     scenario = scenario or generate_scenario(seed)
     simulator = Simulator(scenario)
-    runner_a = ControllerProcess(path_a, soft_deadline=soft_deadline, hard_timeout=hard_timeout)
-    runner_b = ControllerProcess(path_b, soft_deadline=soft_deadline, hard_timeout=hard_timeout)
+    runner_a = ControllerProcess(path_a, soft_deadline=soft_deadline, hard_timeout=hard_timeout, backend=backend)
+    runner_b = ControllerProcess(path_b, soft_deadline=soft_deadline, hard_timeout=hard_timeout, backend=backend)
     action_changes: list[dict] = []
     replay_events: list[dict] = []
     recorded_commands = {Team.A: {}, Team.B: {}}
@@ -177,4 +178,3 @@ def run_match(
         result_text,
     )
     return MatchResult(score_a, score_b, winner, reason, replay, runner_a.stats.summary(), runner_b.stats.summary())
-

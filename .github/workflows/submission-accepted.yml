@@ -1,0 +1,58 @@
+name: Submission Accepted
+
+on:
+  pull_request_target:
+    types: [closed]
+    paths:
+      - "submissions/**/*.py"
+
+permissions:
+  contents: write
+  actions: read
+  pull-requests: write
+
+jobs:
+  initialize-rating:
+    if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out trusted merged main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e .
+      - name: Resolve the one merged submission path
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh api "repos/$REPOSITORY/pulls/$PR_NUMBER/files" --jq '[.[] | select(.filename | startswith("submissions/")) | .filename] | if length == 1 then .[0] else error("expected one submission") end' > submission-path.txt
+      - name: Download matching validated calibration artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          run_id=$(gh run list --workflow submission-validation.yml --commit "$HEAD_SHA" --status success --json databaseId --jq '.[0].databaseId')
+          test -n "$run_id"
+          gh run download "$run_id" --name calibration-result --dir calibration-artifact
+      - name: Strictly validate and apply current rating state
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python -m swarmbench.competition.publisher --artifact calibration-artifact/calibration-result.json --ratings leaderboard/ratings.json --expected-path-file submission-path.txt --expected-sha "$HEAD_SHA"
+      - name: Open current-state bot PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git config user.name swarmbench-bot
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git checkout -b "bot/rating-$PR_NUMBER"
+          git add leaderboard/ratings.json
+          git commit -m "chore: initialize accepted controller rating"
+          git push --set-upstream origin "bot/rating-$PR_NUMBER"
+          url=$(gh pr create --title "Initialize accepted controller rating" --body "Validated current-state update for submission PR #$PR_NUMBER." --base main --head "bot/rating-$PR_NUMBER")
+          gh pr merge "$url" --auto --squash

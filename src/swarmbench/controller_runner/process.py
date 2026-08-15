@@ -22,6 +22,7 @@ from swarmbench.api import DRONE_SPECS, DroneType, GameInfo, GameState, Vec2
 from swarmbench.engine.dynamics import clip_vector
 
 from .protocol import ProtocolError, game_info_to_dict, game_state_to_dict, request, validate_response
+from .sandbox import docker_run_command
 
 
 class ControllerError(RuntimeError):
@@ -76,10 +77,22 @@ class ControllerStats:
 class ControllerProcess:
     """One stateful controller process, fresh for each match."""
 
-    def __init__(self, controller_path: str | Path, *, soft_deadline: float = 0.5, hard_timeout: float = 5.0) -> None:
+    def __init__(
+        self,
+        controller_path: str | Path,
+        *,
+        soft_deadline: float = 0.5,
+        hard_timeout: float = 5.0,
+        backend: str = "local",
+        docker_image: str = "swarmbench-controller",
+    ) -> None:
         self.controller_path = Path(controller_path).resolve()
         self.soft_deadline = soft_deadline
         self.hard_timeout = hard_timeout
+        if backend not in {"local", "docker"}:
+            raise ValueError("backend must be 'local' or 'docker'")
+        self.backend = backend
+        self.docker_image = docker_image
         self.stats = ControllerStats()
         self._process: subprocess.Popen[str] | None = None
         self._responses: queue.Queue[str | None] = queue.Queue()
@@ -129,17 +142,22 @@ class ControllerProcess:
     def _start(self, seed: int) -> None:
         if not self.controller_path.is_file():
             raise FileNotFoundError(self.controller_path)
-        self._scratch = tempfile.TemporaryDirectory(prefix="swarmbench-controller-")
+        self._scratch = tempfile.TemporaryDirectory(prefix="swarmbench-controller-") if self.backend == "local" else None
+        command = (
+            [sys.executable, "-u", "-m", "swarmbench.controller_runner.worker", str(self.controller_path)]
+            if self.backend == "local"
+            else docker_run_command(self.docker_image, self.controller_path, seed)
+        )
         self._process = subprocess.Popen(
-            [sys.executable, "-u", "-m", "swarmbench.controller_runner.worker", str(self.controller_path)],
+            command,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
             encoding="utf-8",
             errors="replace",
-            cwd=self._scratch.name,
-            env=self._clean_environment(seed),
+            cwd=self._scratch.name if self._scratch else None,
+            env=self._clean_environment(seed) if self.backend == "local" else None,
         )
         threading.Thread(target=self._read_stream, args=(self._process.stdout, self._responses, True), daemon=True).start()
         threading.Thread(target=self._read_stream, args=(self._process.stderr, self._logs, False), daemon=True).start()
