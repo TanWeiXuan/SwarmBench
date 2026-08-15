@@ -104,7 +104,7 @@ class ControllerProcess:
         environment.update(
             {
                 "PYTHONPATH": package_root,
-                "PYTHONHASHSEED": str(seed),
+                "PYTHONHASHSEED": str(seed % (2**32)),
                 "SWARMBENCH_CONTROLLER_SEED": str(seed),
                 "OMP_NUM_THREADS": "1",
                 "MKL_NUM_THREADS": "1",
@@ -154,6 +154,8 @@ class ControllerProcess:
             self._process.stdin.write(json.dumps(request(sequence, command, payload), allow_nan=False) + "\n")
             self._process.stdin.flush()
             line = self._responses.get(timeout=timeout)
+        except BrokenPipeError as error:
+            raise ControllerError(f"controller exited before responding: {self.logs[-2000:]}") from error
         except queue.Empty as error:
             self.stats.hard_timeouts += 1
             self.terminate()
