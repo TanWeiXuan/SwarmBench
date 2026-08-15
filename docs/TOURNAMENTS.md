@@ -13,7 +13,7 @@ SwarmBench implements Glicko-2 with new-player defaults 1500 rating, 350 RD, and
 
 ## Five-stage trust boundary
 
-The workflow creates a permanent Tournament Results Discussion before compute starts. Five sequential Docker compute jobs execute controllers with `contents: read`, no secrets/write permissions, no network, and a read-only filesystem. After each batch, a separate trusted reporter validates its primitive JSON, updates the main Discussion, and adds one provisional progress comment at approximately 20%, 40%, 60%, 80%, and 100%.
+One long-lived trusted reporter creates and owns the permanent Tournament Results Discussion while five sequential Docker compute jobs execute controllers with `contents: read`, no secrets/write permissions, no network, and a read-only filesystem. As each artifact arrives, the reporter validates its primitive JSON, updates the main Discussion, and adds one provisional progress comment at approximately 20%, 40%, 60%, 80%, and 100%.
 
 Only the final trusted job can update current ratings. It requires all expected batch IDs exactly once, matching engine/format versions, pairings, sides, seeds, scores, and result ranges. A missing/duplicate/tampered batch aborts the entire period; ratings remain unchanged and the Discussion is marked failed. Exhibition runs always leave ratings/README untouched.
 
@@ -24,4 +24,3 @@ Local tournament CLI:
 ```bash
 python -m swarmbench tournament --mode exhibition --size small --seed 42
 ```
-

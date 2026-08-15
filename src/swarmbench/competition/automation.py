@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import subprocess
+import time
 from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
@@ -119,6 +120,14 @@ def _gh_graphql(query: str, **fields: str) -> dict[str, Any]:
     return json.loads(completed.stdout)
 
 
+def _gh_json(endpoint: str) -> dict[str, Any]:
+    completed = subprocess.run(["gh", "api", endpoint], check=False, capture_output=True, text=True)
+    if completed.returncode:
+        detail = completed.stderr.strip() or completed.stdout.strip() or "unknown error"
+        raise RuntimeError(f"GitHub API request failed: {detail}")
+    return json.loads(completed.stdout)
+
+
 def _discussion_category(owner: str, name: str) -> tuple[str, str]:
     query = "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){id discussionCategories(first:100){nodes{id name}}}}"
     data = _gh_graphql(query, owner=owner, name=name)["data"]["repository"]
@@ -173,6 +182,109 @@ def _add_comment(discussion_id: str, body: str) -> None:
 def _update_discussion(discussion_id: str, body: str) -> None:
     mutation = "mutation($discussionId:ID!,$body:String!){updateDiscussion(input:{discussionId:$discussionId,body:$body}){discussion{id}}}"
     _gh_graphql(mutation, discussionId=discussion_id, body=body)
+
+
+def _artifact_names(repository: str, run_id: str) -> set[str]:
+    data = _gh_json(f"repos/{repository}/actions/runs/{run_id}/artifacts?per_page=100")
+    return {item["name"] for item in data["artifacts"] if not item.get("expired", False)}
+
+
+def _run_jobs(repository: str, run_id: str) -> list[dict[str, Any]]:
+    data = _gh_json(f"repos/{repository}/actions/runs/{run_id}/jobs?filter=latest&per_page=100")
+    return data["jobs"]
+
+
+def _failed_stage(jobs: list[dict[str, Any]]) -> str | None:
+    bad = {"action_required", "cancelled", "failure", "stale", "startup_failure", "timed_out"}
+    for job in jobs:
+        name = str(job.get("name", ""))
+        if (name.startswith("Compute batch") or name == "Validate all batches and publish atomically") and job.get("conclusion") in bad:
+            return name
+    return None
+
+
+def _job_succeeded(jobs: list[dict[str, Any]], name: str) -> bool:
+    return any(job.get("name") == name and job.get("conclusion") == "success" for job in jobs)
+
+
+def _download_artifact(repository: str, run_id: str, name: str, destination: Path) -> None:
+    destination.mkdir(parents=True, exist_ok=True)
+    completed = subprocess.run(
+        ["gh", "run", "download", run_id, "--repo", repository, "--name", name, "--dir", str(destination)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if completed.returncode:
+        detail = completed.stderr.strip() or completed.stdout.strip() or "unknown error"
+        raise RuntimeError(f"failed to download {name}: {detail}")
+
+
+def _mark_failed(data: dict[str, Any], discussion_id: str, stage: str) -> None:
+    body = initial_discussion_body(data).replace("## Status: RUNNING", "## Status: FAILED")
+    comment = f"### Tournament failed\n\nThe workflow stopped during `{stage}`. Official ratings were not partially updated."
+    _update_discussion(discussion_id, body)
+    _add_comment(discussion_id, comment)
+
+
+def live_report(
+    data: dict[str, Any],
+    repository: str,
+    run_id: str,
+    work: Path,
+    *,
+    poll_seconds: float = 10.0,
+    timeout_seconds: float = 9_900.0,
+) -> dict[str, str]:
+    """Own one Discussion while isolated jobs publish validated JSON artifacts."""
+
+    validate_plan(data)
+    discussion = create_discussion(data, repository)
+    print(f"Tournament Discussion: {discussion['url']}", flush=True)
+    deadline = time.monotonic() + timeout_seconds
+
+    def wait_for(name: str, job_name: str) -> None:
+        while True:
+            jobs = _run_jobs(repository, run_id)
+            failed = _failed_stage(jobs)
+            if failed:
+                raise RuntimeError(f"{failed} failed")
+            if name in _artifact_names(repository, run_id) and _job_succeeded(jobs, job_name):
+                return
+            if time.monotonic() >= deadline:
+                raise TimeoutError(f"timed out waiting for {name}")
+            time.sleep(poll_seconds)
+
+    try:
+        for index in range(5):
+            artifact = f"tournament-batch-{index}"
+            wait_for(artifact, f"Compute batch {index + 1} (untrusted controllers)")
+            _download_artifact(repository, run_id, artifact, work / artifact)
+            summary = progress_summary(data, _load_batches(work), index)
+            _update_discussion(discussion["id"], initial_discussion_body(data) + "\n\n" + summary)
+            _add_comment(discussion["id"], summary)
+
+        wait_for("tournament-results", "Validate all batches and publish atomically")
+        result_dir = work / "tournament-results"
+        _download_artifact(repository, run_id, "tournament-results", result_dir)
+        result = json.loads((result_dir / "tournament-result.json").read_text(encoding="utf-8"))
+        if (
+            result.get("format_version") != TOURNAMENT_FORMAT_VERSION
+            or result.get("mode") != data["mode"]
+            or result.get("game_count") != len(data["games"])
+            or not str(result.get("discussion_body", "")).startswith("## Status: COMPLETE")
+        ):
+            raise ValueError("invalid tournament result artifact")
+        body = result["discussion_body"]
+        _update_discussion(discussion["id"], body)
+        _add_comment(discussion["id"], "### Final result\n\n" + body)
+    except Exception as error:
+        try:
+            _mark_failed(data, discussion["id"], str(error))
+        except Exception:
+            pass
+        raise
+    return discussion
 
 
 def _load_batches(directory: Path) -> list[dict[str, Any]]:
@@ -311,42 +423,29 @@ def main(argv: list[str] | None = None) -> int:
     prepare.add_argument("--run-id", required=True)
     prepare.add_argument("--repository", required=True)
     prepare.add_argument("--output", type=Path, required=True)
-    discussion = subparsers.add_parser("discussion-start")
-    discussion.add_argument("--plan", type=Path, required=True)
-    discussion.add_argument("--repository", required=True)
-    discussion.add_argument("--output", type=Path, required=True)
     compute = subparsers.add_parser("compute")
     compute.add_argument("--plan", type=Path, required=True)
     compute.add_argument("--batch", type=int, required=True)
     compute.add_argument("--output", type=Path, required=True)
     compute.add_argument("--replay-dir", type=Path, required=True)
     compute.add_argument("--duration", type=float, default=90.0)
-    report = subparsers.add_parser("report")
-    report.add_argument("--plan", type=Path, required=True)
-    report.add_argument("--discussion", type=Path, required=True)
-    report.add_argument("--batches", type=Path, required=True)
-    report.add_argument("--completed-index", type=int, required=True)
+    reporter = subparsers.add_parser("live-report")
+    reporter.add_argument("--plan", type=Path, required=True)
+    reporter.add_argument("--repository", required=True)
+    reporter.add_argument("--run-id", required=True)
+    reporter.add_argument("--work", type=Path, required=True)
     final = subparsers.add_parser("final")
     final.add_argument("--plan", type=Path, required=True)
-    final.add_argument("--discussion", type=Path, required=True)
     final.add_argument("--batches", type=Path, required=True)
     final.add_argument("--ratings", type=Path, required=True)
     final.add_argument("--readme", type=Path, required=True)
     final.add_argument("--output", type=Path, required=True)
-    failure = subparsers.add_parser("failure")
-    failure.add_argument("--plan", type=Path, required=True)
-    failure.add_argument("--discussion", type=Path, required=True)
-    failure.add_argument("--stage", required=True)
     args = parser.parse_args(argv)
 
     if args.command == "prepare":
         seed = resolve_seed(args.seed, args.run_id)
         data = prepare_plan(load_ratings(args.ratings), seed=seed, mode=args.mode, size=args.size, run_id=args.run_id, repository=args.repository)
         args.output.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    elif args.command == "discussion-start":
-        data = json.loads(args.plan.read_text(encoding="utf-8"))
-        validate_plan(data)
-        args.output.write_text(json.dumps(create_discussion(data, args.repository), indent=2) + "\n", encoding="utf-8")
     elif args.command == "compute":
         data = json.loads(args.plan.read_text(encoding="utf-8"))
         plan, records = validate_plan(data)
@@ -359,30 +458,24 @@ def main(argv: list[str] | None = None) -> int:
             replay_dir=args.replay_dir,
         )
         args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    elif args.command == "report":
+    elif args.command == "live-report":
         data = json.loads(args.plan.read_text(encoding="utf-8"))
-        discussion_info = json.loads(args.discussion.read_text(encoding="utf-8"))
-        batches = _load_batches(args.batches)
-        summary = progress_summary(data, batches, args.completed_index)
-        _add_comment(discussion_info["id"], summary)
-        _update_discussion(discussion_info["id"], initial_discussion_body(data) + "\n\n" + summary)
+        live_report(data, args.repository, args.run_id, args.work)
     elif args.command == "final":
         data = json.loads(args.plan.read_text(encoding="utf-8"))
-        discussion_info = json.loads(args.discussion.read_text(encoding="utf-8"))
         plan, records = validate_plan(data)
         outcome = aggregate_batches(plan, _load_batches(args.batches), records)
         report_body = final_report(data, outcome)
         if plan.mode == "official":
             save_ratings(outcome.ratings_after, args.ratings)
             update_readme_leaderboard(args.readme, outcome.ratings_after)
-        _update_discussion(discussion_info["id"], report_body)
-        _add_comment(discussion_info["id"], "### Final result\n\n" + report_body)
         args.output.write_text(
             json.dumps(
                 {
                     "format_version": TOURNAMENT_FORMAT_VERSION,
                     "mode": plan.mode,
                     "game_count": len(outcome.games),
+                    "discussion_body": report_body,
                     "ratings_before": ratings_to_dict(outcome.ratings_before),
                     "ratings_after": ratings_to_dict(outcome.ratings_after),
                 },
@@ -392,12 +485,6 @@ def main(argv: list[str] | None = None) -> int:
             + "\n",
             encoding="utf-8",
         )
-    else:
-        data = json.loads(args.plan.read_text(encoding="utf-8"))
-        discussion_info = json.loads(args.discussion.read_text(encoding="utf-8"))
-        body = initial_discussion_body(data).replace("## Status: RUNNING", "## Status: FAILED")
-        _add_comment(discussion_info["id"], f"### Tournament failed\n\nThe workflow stopped during `{args.stage}`. Official ratings were not partially updated.")
-        _update_discussion(discussion_info["id"], body)
     return 0
 
 

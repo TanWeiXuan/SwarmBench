@@ -55,19 +55,23 @@ def test_tournament_compute_and_report_permissions_are_separated() -> None:
     text = workflow("tournament.yml")
     assert 'cron: "17 */6 * * *"' in text
     assert text.count("SWARMBENCH_BACKEND: docker") == 5
-    assert text.count("Report progress") == 5
+    assert text.count("Maintain live tournament Discussion") == 1
     for index in range(5):
-        compute = text.split(f"  compute-{index}:", 1)[1].split(f"  report-{index}:", 1)[0]
+        compute = text.split(f"  compute-{index}:", 1)[1]
+        compute = compute.split(f"  compute-{index + 1}:", 1)[0] if index < 4 else compute.split("  final:", 1)[0]
         assert "contents: read" in compute
         assert "discussions: write" not in compute
         assert "pull-requests: write" not in compute
-        reporter = text.split(f"  report-{index}:", 1)[1]
-        reporter = reporter.split(f"  compute-{index + 1}:", 1)[0] if index < 4 else reporter.split("  final:", 1)[0]
-        assert "contents: read" in reporter
-        assert "discussions: write" in reporter
-        assert "automation compute" not in reporter
 
-    finalizer = text.split("  failure-finalizer:", 1)[1]
-    assert "contents: read" in finalizer
-    assert "discussions: write" in finalizer
-    assert "automation compute" not in finalizer
+    reporter = text.split("  reporter:", 1)[1].split("  compute-0:", 1)[0]
+    assert "contents: read" in reporter
+    assert "actions: read" in reporter
+    assert "discussions: write" in reporter
+    assert "automation live-report" in reporter
+    assert "automation compute" not in reporter
+
+    final = text.split("  final:", 1)[1]
+    assert "contents: write" in final
+    assert "discussions: write" not in final
+    assert "automation final" in final
+    assert "automation compute" not in final

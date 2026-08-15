@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from swarmbench.competition import automation
-from swarmbench.competition.automation import prepare_plan, progress_summary, resolve_seed, validate_plan
+from swarmbench.competition.automation import live_report, prepare_plan, progress_summary, resolve_seed, validate_plan
 from swarmbench.competition.publisher import leaderboard_markdown, update_readme_leaderboard
 from swarmbench.competition.ratings import RatingRecord
 from swarmbench.version import ENGINE_VERSION, TOURNAMENT_FORMAT_VERSION
@@ -29,6 +29,14 @@ def test_graphql_failure_includes_cli_error(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr(automation.subprocess, "run", lambda *args, **kwargs: completed)
     with pytest.raises(RuntimeError, match="permission denied"):
         automation._gh_graphql("query { viewer { login } }")
+
+
+def test_failed_stage_only_reports_tournament_work() -> None:
+    jobs = [
+        {"name": "Maintain live tournament Discussion", "conclusion": "failure"},
+        {"name": "Compute batch 3 (untrusted controllers)", "conclusion": "timed_out"},
+    ]
+    assert automation._failed_stage(jobs) == "Compute batch 3 (untrusted controllers)"
 
 
 def test_automation_plan_round_trip_and_batch_coverage() -> None:
@@ -76,6 +84,73 @@ def test_progress_summary_validates_each_completed_batch() -> None:
         )
     summary = progress_summary(data, [batch], 0)
     assert "Completed:" in summary and "provisional" in summary
+
+
+def test_live_report_owns_discussion_until_final_artifact(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    data = prepare_plan(records(), seed=42, mode="exhibition", size="small", run_id="123", repository="owner/repo")
+    plan, _ = validate_plan(data)
+    games = {game.game_id: game for game in plan.games}
+    batches = {}
+    for index, game_ids in enumerate(plan.batches):
+        batches[f"tournament-batch-{index}"] = {
+            "format_version": TOURNAMENT_FORMAT_VERSION,
+            "engine_version": ENGINE_VERSION,
+            "tournament_seed": plan.seed,
+            "batch_index": index,
+            "expected_game_ids": sorted(game_ids),
+            "games": [
+                {
+                    "game_id": games[game_id].game_id,
+                    "pairing_id": games[game_id].pairing_id,
+                    "controller_a": games[game_id].controller_a,
+                    "controller_b": games[game_id].controller_b,
+                    "scenario_seed": games[game_id].scenario_seed,
+                    "score_a": 0,
+                    "score_b": 0,
+                    "result_a": 0.5,
+                    "stats_a": {},
+                    "stats_b": {},
+                }
+                for game_id in game_ids
+            ],
+        }
+    artifacts = set(batches) | {"tournament-results"}
+    jobs = [
+        {"name": f"Compute batch {index + 1} (untrusted controllers)", "conclusion": "success"}
+        for index in range(5)
+    ] + [{"name": "Validate all batches and publish atomically", "conclusion": "success"}]
+    updates = []
+    comments = []
+
+    def download(_repository: str, _run_id: str, name: str, destination: Path) -> None:
+        destination.mkdir(parents=True)
+        if name in batches:
+            (destination / f"batch-{name[-1]}.json").write_text(json.dumps(batches[name]), encoding="utf-8")
+        else:
+            (destination / "tournament-result.json").write_text(
+                json.dumps(
+                    {
+                        "format_version": TOURNAMENT_FORMAT_VERSION,
+                        "mode": "exhibition",
+                        "game_count": len(plan.games),
+                        "discussion_body": "## Status: COMPLETE\n\nDone.",
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+    monkeypatch.setattr(automation, "create_discussion", lambda *_args: {"id": "D1", "url": "https://example.test/1"})
+    monkeypatch.setattr(automation, "_artifact_names", lambda *_args: artifacts)
+    monkeypatch.setattr(automation, "_run_jobs", lambda *_args: jobs)
+    monkeypatch.setattr(automation, "_download_artifact", download)
+    monkeypatch.setattr(automation, "_update_discussion", lambda _id, body: updates.append(body))
+    monkeypatch.setattr(automation, "_add_comment", lambda _id, body: comments.append(body))
+
+    discussion = live_report(data, "owner/repo", "123", tmp_path, poll_seconds=0)
+
+    assert discussion["id"] == "D1"
+    assert len(updates) == 6 and updates[-1].startswith("## Status: COMPLETE")
+    assert len(comments) == 6 and comments[-1].startswith("### Final result")
 
 
 def test_readme_leaderboard_contains_community_only(tmp_path: Path) -> None:
