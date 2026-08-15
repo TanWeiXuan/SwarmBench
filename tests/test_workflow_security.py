@@ -45,6 +45,12 @@ def test_tournament_jobs_install_automation_dependencies() -> None:
     assert all('".[competition]"' in line for line in installs)
 
 
+def test_submission_jobs_install_validation_dependencies() -> None:
+    installs = [line for line in workflow("submission-validation.yml").splitlines() if "pip install -e" in line]
+    assert installs
+    assert all('".[competition]"' in line for line in installs)
+
+
 def test_tournament_compute_and_report_permissions_are_separated() -> None:
     text = workflow("tournament.yml")
     assert 'cron: "17 */6 * * *"' in text
