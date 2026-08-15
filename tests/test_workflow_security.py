@@ -63,5 +63,11 @@ def test_tournament_compute_and_report_permissions_are_separated() -> None:
         assert "pull-requests: write" not in compute
         reporter = text.split(f"  report-{index}:", 1)[1]
         reporter = reporter.split(f"  compute-{index + 1}:", 1)[0] if index < 4 else reporter.split("  final:", 1)[0]
+        assert "contents: write" in reporter
         assert "discussions: write" in reporter
         assert "automation compute" not in reporter
+
+    finalizer = text.split("  failure-finalizer:", 1)[1]
+    assert "contents: write" in finalizer
+    assert "discussions: write" in finalizer
+    assert "automation compute" not in finalizer
