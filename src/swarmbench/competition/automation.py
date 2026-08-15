@@ -112,7 +112,10 @@ def _gh_graphql(query: str, **fields: str) -> dict[str, Any]:
     command = ["gh", "api", "graphql", "-f", f"query={query}"]
     for key, value in fields.items():
         command.extend(("-f", f"{key}={value}"))
-    completed = subprocess.run(command, check=True, capture_output=True, text=True)
+    completed = subprocess.run(command, check=False, capture_output=True, text=True)
+    if completed.returncode:
+        detail = completed.stderr.strip() or completed.stdout.strip() or "unknown error"
+        raise RuntimeError(f"GitHub GraphQL request failed: {detail}")
     return json.loads(completed.stdout)
 
 
@@ -361,8 +364,8 @@ def main(argv: list[str] | None = None) -> int:
         discussion_info = json.loads(args.discussion.read_text(encoding="utf-8"))
         batches = _load_batches(args.batches)
         summary = progress_summary(data, batches, args.completed_index)
-        _update_discussion(discussion_info["id"], initial_discussion_body(data) + "\n\n" + summary)
         _add_comment(discussion_info["id"], summary)
+        _update_discussion(discussion_info["id"], initial_discussion_body(data) + "\n\n" + summary)
     elif args.command == "final":
         data = json.loads(args.plan.read_text(encoding="utf-8"))
         discussion_info = json.loads(args.discussion.read_text(encoding="utf-8"))
@@ -393,8 +396,8 @@ def main(argv: list[str] | None = None) -> int:
         data = json.loads(args.plan.read_text(encoding="utf-8"))
         discussion_info = json.loads(args.discussion.read_text(encoding="utf-8"))
         body = initial_discussion_body(data).replace("## Status: RUNNING", "## Status: FAILED")
-        _update_discussion(discussion_info["id"], body)
         _add_comment(discussion_info["id"], f"### Tournament failed\n\nThe workflow stopped during `{args.stage}`. Official ratings were not partially updated.")
+        _update_discussion(discussion_info["id"], body)
     return 0
 
 

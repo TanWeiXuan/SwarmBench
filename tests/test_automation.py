@@ -1,8 +1,10 @@
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
 
+from swarmbench.competition import automation
 from swarmbench.competition.automation import prepare_plan, progress_summary, resolve_seed, validate_plan
 from swarmbench.competition.publisher import leaderboard_markdown, update_readme_leaderboard
 from swarmbench.competition.ratings import RatingRecord
@@ -20,6 +22,13 @@ def test_seed_resolution_handles_integer_string_and_empty() -> None:
     assert resolve_seed("42", "10") == 42
     assert resolve_seed("named-seed", "10") == resolve_seed("named-seed", "99")
     assert resolve_seed(None, "10") == resolve_seed(None, "10")
+
+
+def test_graphql_failure_includes_cli_error(monkeypatch: pytest.MonkeyPatch) -> None:
+    completed = subprocess.CompletedProcess([], 1, stdout="", stderr="gh: permission denied")
+    monkeypatch.setattr(automation.subprocess, "run", lambda *args, **kwargs: completed)
+    with pytest.raises(RuntimeError, match="permission denied"):
+        automation._gh_graphql("query { viewer { login } }")
 
 
 def test_automation_plan_round_trip_and_batch_coverage() -> None:
