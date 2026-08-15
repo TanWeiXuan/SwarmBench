@@ -9,6 +9,9 @@ from pathlib import Path, PurePosixPath
 from .ratings import RatingRecord, load_ratings, save_ratings
 from .submission import SubmissionValidationError, validate_calibration_artifact
 
+LEADERBOARD_START = "<!-- LEADERBOARD_START -->"
+LEADERBOARD_END = "<!-- LEADERBOARD_END -->"
+
 
 def accept_calibration(
     artifact: dict,
@@ -42,6 +45,33 @@ def accept_calibration(
         games=previous.games if previous else 0,
     )
     return updated
+
+
+def leaderboard_markdown(ratings: dict[str, RatingRecord]) -> str:
+    community = sorted((record for record in ratings.values() if not record.built_in), key=lambda item: (-item.rating, item.controller_id))[:10]
+    lines = [
+        LEADERBOARD_START,
+        "| Rank | Controller | Author | Rating | RD | W | D | L | Games |",
+        "| ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    if community:
+        for rank, record in enumerate(community, 1):
+            lines.append(
+                f"| {rank} | {record.display_name} | {record.author} | {record.rating:.0f} | {record.deviation:.0f} | {record.wins} | {record.draws} | {record.losses} | {record.games} |"
+            )
+    else:
+        lines.append("| — | No community controllers yet | — | — | — | — | — | — | — |")
+    lines.append(LEADERBOARD_END)
+    return "\n".join(lines)
+
+
+def update_readme_leaderboard(readme: Path, ratings: dict[str, RatingRecord]) -> None:
+    text = readme.read_text(encoding="utf-8")
+    start, end = text.find(LEADERBOARD_START), text.find(LEADERBOARD_END)
+    if start < 0 or end < start:
+        raise ValueError("README leaderboard markers are missing")
+    end += len(LEADERBOARD_END)
+    readme.write_text(text[:start] + leaderboard_markdown(ratings) + text[end:], encoding="utf-8")
 
 
 def main() -> int:

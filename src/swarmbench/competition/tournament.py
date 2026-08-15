@@ -9,6 +9,7 @@ from typing import Any
 
 from swarmbench.controllers.baselines import BASELINE_NAMES, baseline_path
 from swarmbench.match import run_match
+from swarmbench.replay import save_replay
 from swarmbench.version import ENGINE_VERSION, TOURNAMENT_FORMAT_VERSION
 
 from .matchmaking import MatchmakingEntry, ScheduledGame, schedule_games, select_pairings
@@ -48,9 +49,13 @@ def execute_batch(
     controller_paths: dict[str, Path],
     *,
     duration: float = 90.0,
+    backend: str = "local",
+    replay_dir: Path | None = None,
 ) -> dict[str, Any]:
     expected = set(plan.batches[batch_index])
     results = []
+    representative = None
+    closest = None
     for game in plan.games:
         if game.game_id not in expected:
             continue
@@ -59,6 +64,7 @@ def execute_batch(
             controller_paths[game.controller_b],
             seed=game.scenario_seed,
             duration=duration,
+            backend=backend,
         )
         score = 0.5 if match.winner is None else (1.0 if match.winner.value == "A" else 0.0)
         results.append(
@@ -76,6 +82,20 @@ def execute_batch(
                 "stats_b": match.stats_b,
             }
         )
+        if replay_dir is not None:
+            representative = representative or match.replay
+            difference = abs(match.score_a - match.score_b)
+            if closest is None or difference < closest[0]:
+                closest = (difference, match.replay)
+    replay_artifacts = []
+    if replay_dir is not None:
+        replay_dir.mkdir(parents=True, exist_ok=True)
+        if representative is not None:
+            destination = save_replay(representative, replay_dir / f"representative-b{batch_index}.json.gz")
+            replay_artifacts.append(destination.name)
+        if closest is not None:
+            destination = save_replay(closest[1], replay_dir / f"closest-b{batch_index}.json.gz")
+            replay_artifacts.append(destination.name)
     return {
         "format_version": TOURNAMENT_FORMAT_VERSION,
         "engine_version": ENGINE_VERSION,
@@ -83,6 +103,7 @@ def execute_batch(
         "batch_index": batch_index,
         "expected_game_ids": sorted(expected),
         "games": results,
+        "replay_artifacts": replay_artifacts,
     }
 
 
@@ -156,4 +177,3 @@ def tournament_cli(*, seed: int, size: str, mode: str) -> int:
         ratings_path.write_text(json.dumps(ratings_to_dict(outcome.ratings_after), indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"{mode} tournament: {len(plan.pairings)} pairings, {len(outcome.games)} games")
     return 0
-

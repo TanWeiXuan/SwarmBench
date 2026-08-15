@@ -1,0 +1,428 @@
+name: Ranking Tournament
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Rating-changing official run or non-rating exhibition
+        type: choice
+        options: [official, exhibition]
+        default: exhibition
+      size:
+        description: Matchmaking and scenario-count preset
+        type: choice
+        options: [small, default, large]
+        default: small
+      seed:
+        description: Optional integer or stable string seed
+        type: string
+        required: false
+
+concurrency:
+  group: swarmbench-tournament-${{ github.event_name == 'schedule' && 'official' || inputs.mode }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare and open Discussion
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      discussions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[competition]"
+      - name: Create deterministic schedule
+        env:
+          MODE: ${{ github.event_name == 'schedule' && 'official' || inputs.mode }}
+          SIZE: ${{ github.event_name == 'schedule' && 'default' || inputs.size }}
+          SEED: ${{ inputs.seed }}
+          RUN_ID: ${{ github.run_id }}
+          REPOSITORY: ${{ github.repository }}
+        run: python -m swarmbench.competition.automation prepare --ratings leaderboard/ratings.json --mode "$MODE" --size "$SIZE" --seed "$SEED" --run-id "$RUN_ID" --repository "$REPOSITORY" --output plan.json
+      - name: Create permanent tournament Discussion
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: python -m swarmbench.competition.automation discussion-start --plan plan.json --repository "$REPOSITORY" --output discussion.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tournament-context
+          path: |
+            plan.json
+            discussion.json
+          retention-days: 30
+
+  compute-0:
+    name: Compute batch 1 (untrusted controllers)
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[competition]"
+      - run: docker build --tag swarmbench-controller --file Dockerfile.controller .
+      - uses: actions/download-artifact@v4
+        with:
+          name: tournament-context
+          path: context
+      - env:
+          SWARMBENCH_BACKEND: docker
+        run: python -m swarmbench.competition.automation compute --plan context/plan.json --batch 0 --output batch-0.json --replay-dir replays
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tournament-batch-0
+          path: |
+            batch-0.json
+            replays/
+          retention-days: 30
+
+  report-0:
+    name: Report progress 20%
+    needs: compute-0
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      discussions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: tournament-context
+          path: context
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tournament-batch-*
+          path: batches
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m swarmbench.competition.automation report --plan context/plan.json --discussion context/discussion.json --batches batches --completed-index 0
+
+  compute-1:
+    name: Compute batch 2 (untrusted controllers)
+    needs: report-0
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[competition]"
+      - run: docker build --tag swarmbench-controller --file Dockerfile.controller .
+      - uses: actions/download-artifact@v4
+        with:
+          name: tournament-context
+          path: context
+      - env:
+          SWARMBENCH_BACKEND: docker
+        run: python -m swarmbench.competition.automation compute --plan context/plan.json --batch 1 --output batch-1.json --replay-dir replays
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tournament-batch-1
+          path: |
+            batch-1.json
+            replays/
+          retention-days: 30
+
+  report-1:
+    name: Report progress 40%
+    needs: compute-1
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      discussions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: tournament-context
+          path: context
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tournament-batch-*
+          path: batches
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m swarmbench.competition.automation report --plan context/plan.json --discussion context/discussion.json --batches batches --completed-index 1
+
+  compute-2:
+    name: Compute batch 3 (untrusted controllers)
+    needs: report-1
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[competition]"
+      - run: docker build --tag swarmbench-controller --file Dockerfile.controller .
+      - uses: actions/download-artifact@v4
+        with:
+          name: tournament-context
+          path: context
+      - env:
+          SWARMBENCH_BACKEND: docker
+        run: python -m swarmbench.competition.automation compute --plan context/plan.json --batch 2 --output batch-2.json --replay-dir replays
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tournament-batch-2
+          path: |
+            batch-2.json
+            replays/
+          retention-days: 30
+
+  report-2:
+    name: Report progress 60%
+    needs: compute-2
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      discussions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: tournament-context
+          path: context
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tournament-batch-*
+          path: batches
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m swarmbench.competition.automation report --plan context/plan.json --discussion context/discussion.json --batches batches --completed-index 2
+
+  compute-3:
+    name: Compute batch 4 (untrusted controllers)
+    needs: report-2
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[competition]"
+      - run: docker build --tag swarmbench-controller --file Dockerfile.controller .
+      - uses: actions/download-artifact@v4
+        with:
+          name: tournament-context
+          path: context
+      - env:
+          SWARMBENCH_BACKEND: docker
+        run: python -m swarmbench.competition.automation compute --plan context/plan.json --batch 3 --output batch-3.json --replay-dir replays
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tournament-batch-3
+          path: |
+            batch-3.json
+            replays/
+          retention-days: 30
+
+  report-3:
+    name: Report progress 80%
+    needs: compute-3
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      discussions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: tournament-context
+          path: context
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tournament-batch-*
+          path: batches
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m swarmbench.competition.automation report --plan context/plan.json --discussion context/discussion.json --batches batches --completed-index 3
+
+  compute-4:
+    name: Compute batch 5 (untrusted controllers)
+    needs: report-3
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e ".[competition]"
+      - run: docker build --tag swarmbench-controller --file Dockerfile.controller .
+      - uses: actions/download-artifact@v4
+        with:
+          name: tournament-context
+          path: context
+      - env:
+          SWARMBENCH_BACKEND: docker
+        run: python -m swarmbench.competition.automation compute --plan context/plan.json --batch 4 --output batch-4.json --replay-dir replays
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tournament-batch-4
+          path: |
+            batch-4.json
+            replays/
+          retention-days: 30
+
+  report-4:
+    name: Report progress 100%
+    needs: compute-4
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      discussions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: tournament-context
+          path: context
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tournament-batch-*
+          path: batches
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m swarmbench.competition.automation report --plan context/plan.json --discussion context/discussion.json --batches batches --completed-index 4
+
+  final:
+    name: Validate all batches and publish atomically
+    needs: report-4
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+      discussions: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: tournament-context
+          path: context
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tournament-batch-*
+          path: batches
+          merge-multiple: true
+      - name: Validate complete period, update Discussion, and stage current state
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m swarmbench.competition.automation final --plan context/plan.json --discussion context/discussion.json --batches batches --ratings leaderboard/ratings.json --readme README.md --output tournament-result.json
+      - name: Open rating publication PR for official runs
+        if: ${{ github.event_name == 'schedule' || inputs.mode == 'official' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          git config user.name swarmbench-bot
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git checkout -b "bot/tournament-$RUN_ID"
+          git add leaderboard/ratings.json README.md
+          git commit -m "chore: publish tournament $RUN_ID ratings"
+          git push --set-upstream origin "bot/tournament-$RUN_ID"
+          url=$(gh pr create --title "Publish tournament $RUN_ID ratings" --body "Atomic current-state update from the completed official rating period." --base main --head "bot/tournament-$RUN_ID")
+          gh pr merge "$url" --auto --squash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tournament-results
+          path: tournament-result.json
+          retention-days: 90
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tournament-replays
+          path: batches/replays/*.json.gz
+          if-no-files-found: warn
+          retention-days: 30
+
+  failure-finalizer:
+    name: Mark failed tournament without rating changes
+    needs: [prepare, compute-0, report-0, compute-1, report-1, compute-2, report-2, compute-3, report-3, compute-4, report-4, final]
+    if: ${{ always() && needs.prepare.result == 'success' && needs.final.result != 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      discussions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          name: tournament-context
+          path: context
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -m swarmbench.competition.automation failure --plan context/plan.json --discussion context/discussion.json --stage "${{ needs.final.result }}"

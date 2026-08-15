@@ -36,3 +36,19 @@ def test_acceptance_workflow_checks_out_only_merged_main() -> None:
 def test_controller_dockerfile_drops_root() -> None:
     text = (ROOT / "Dockerfile.controller").read_text(encoding="utf-8")
     assert "USER 65534:65534" in text
+
+
+def test_tournament_compute_and_report_permissions_are_separated() -> None:
+    text = workflow("tournament.yml")
+    assert 'cron: "17 */6 * * *"' in text
+    assert text.count("SWARMBENCH_BACKEND: docker") == 5
+    assert text.count("Report progress") == 5
+    for index in range(5):
+        compute = text.split(f"  compute-{index}:", 1)[1].split(f"  report-{index}:", 1)[0]
+        assert "contents: read" in compute
+        assert "discussions: write" not in compute
+        assert "pull-requests: write" not in compute
+        reporter = text.split(f"  report-{index}:", 1)[1]
+        reporter = reporter.split(f"  compute-{index + 1}:", 1)[0] if index < 4 else reporter.split("  final:", 1)[0]
+        assert "discussions: write" in reporter
+        assert "automation compute" not in reporter
