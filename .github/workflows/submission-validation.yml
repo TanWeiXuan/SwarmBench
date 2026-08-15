@@ -27,7 +27,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m pip install -e .
+      - run: python -m pip install -e ".[competition]"
       - name: Validate changed files
         env:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
@@ -48,7 +48,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m pip install -e .
+      - run: python -m pip install -e ".[competition]"
       - env:
           SUBMISSION_PATH: ${{ needs.structure.outputs.path }}
         run: python -m swarmbench.competition.submission source "$SUBMISSION_PATH"
@@ -65,7 +65,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m pip install -e .
+      - run: python -m pip install -e ".[competition]"
       - run: docker build --tag swarmbench-controller --file Dockerfile.controller .
       - env:
           SUBMISSION_PATH: ${{ needs.structure.outputs.path }}
@@ -129,7 +129,7 @@ jobs:
         if: ${{ needs.structure.outputs.is_submission == 'true' }}
         with:
           python-version: "3.12"
-      - run: python -m pip install -e .
+      - run: python -m pip install -e ".[competition]"
         if: ${{ needs.structure.outputs.is_submission == 'true' }}
       - uses: actions/download-artifact@v4
         if: ${{ needs.structure.outputs.is_submission == 'true' }}

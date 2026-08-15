@@ -35,7 +35,20 @@ def test_acceptance_workflow_checks_out_only_merged_main() -> None:
 
 def test_controller_dockerfile_drops_root() -> None:
     text = (ROOT / "Dockerfile.controller").read_text(encoding="utf-8")
+    assert "COPY requirements-controller.txt pyproject.toml README.md ./" in text
     assert "USER 65534:65534" in text
+
+
+def test_tournament_jobs_install_automation_dependencies() -> None:
+    installs = [line for line in workflow("tournament.yml").splitlines() if "pip install -e" in line]
+    assert installs
+    assert all('".[competition]"' in line for line in installs)
+
+
+def test_submission_jobs_install_validation_dependencies() -> None:
+    installs = [line for line in workflow("submission-validation.yml").splitlines() if "pip install -e" in line]
+    assert installs
+    assert all('".[competition]"' in line for line in installs)
 
 
 def test_tournament_compute_and_report_permissions_are_separated() -> None:
