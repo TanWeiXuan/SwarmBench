@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 name = "swarmbench"
 version = "0.1.0"
 description = "Deterministic multi-agent swarm control benchmark"
+readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 dependencies = ["numpy>=2.0,<3"]
@@ -24,4 +25,3 @@ packages = ["src/swarmbench"]
 [tool.pytest.ini_options]
 addopts = "-ra"
 testpaths = ["tests"]
-

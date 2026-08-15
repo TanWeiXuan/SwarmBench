@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import time
 from pathlib import Path
 
 from swarmbench.controllers.baselines import BASELINE_NAMES, baseline_path
@@ -41,6 +42,10 @@ def build_parser() -> argparse.ArgumentParser:
     tournament.add_argument("--seed", type=int, required=True)
     tournament.add_argument("--size", choices=("small", "default", "large"), default="small")
     tournament.add_argument("--mode", choices=("official", "exhibition"), default="exhibition")
+
+    benchmark = subparsers.add_parser("benchmark", help="time a short headless isolated match")
+    benchmark.add_argument("--duration", type=float, default=10.0)
+    benchmark.add_argument("--seed", type=int, default=42)
     return parser
 
 
@@ -73,5 +78,10 @@ def main(argv: list[str] | None = None) -> int:
         from swarmbench.competition.tournament import tournament_cli
 
         return tournament_cli(seed=args.seed, size=args.size, mode=args.mode)
+    if args.command == "benchmark":
+        started = time.perf_counter()
+        result = run_match(baseline_path("rush"), baseline_path("rush"), seed=args.seed, duration=args.duration)
+        elapsed = time.perf_counter() - started
+        print(f"simulated {result.replay.final_time:.2f}s in {elapsed:.3f}s ({result.replay.final_time / elapsed:.1f}x real-time)")
+        return 0
     return 2
-

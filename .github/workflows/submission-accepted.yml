@@ -42,7 +42,7 @@ jobs:
       - name: Strictly validate and apply current rating state
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python -m swarmbench.competition.publisher --artifact calibration-artifact/calibration-result.json --ratings leaderboard/ratings.json --expected-path-file submission-path.txt --expected-sha "$HEAD_SHA"
+        run: python -m swarmbench.competition.publisher --artifact calibration-artifact/calibration-result.json --ratings leaderboard/ratings.json --readme README.md --expected-path-file submission-path.txt --expected-sha "$HEAD_SHA"
       - name: Open current-state bot PR
         env:
           GH_TOKEN: ${{ github.token }}
@@ -51,7 +51,7 @@ jobs:
           git config user.name swarmbench-bot
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git checkout -b "bot/rating-$PR_NUMBER"
-          git add leaderboard/ratings.json
+          git add leaderboard/ratings.json README.md
           git commit -m "chore: initialize accepted controller rating"
           git push --set-upstream origin "bot/rating-$PR_NUMBER"
           url=$(gh pr create --title "Initialize accepted controller rating" --body "Validated current-state update for submission PR #$PR_NUMBER." --base main --head "bot/rating-$PR_NUMBER")

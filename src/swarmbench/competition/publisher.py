@@ -78,6 +78,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifact", type=Path, required=True)
     parser.add_argument("--ratings", type=Path, required=True)
+    parser.add_argument("--readme", type=Path)
     parser.add_argument("--expected-path")
     parser.add_argument("--expected-path-file", type=Path)
     parser.add_argument("--expected-sha", required=True)
@@ -92,6 +93,8 @@ def main() -> int:
         expected_sha=args.expected_sha,
     )
     save_ratings(updated, args.ratings)
+    if args.readme:
+        update_readme_leaderboard(args.readme, updated)
     return 0
 
 
