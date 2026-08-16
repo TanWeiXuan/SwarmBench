@@ -58,12 +58,13 @@ Only the latest rating state is committed; permanent tournament history lives in
 | Rank | Controller | Author | Rating | RD | W | D | L | Games |
 | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | 1 | Gpt 5 6 Terra Spark Ultra | TanWeiXuan | 2097 | 37 | 123 | 2 | 3 | 128 |
-| 2 | Luna Max | TanWeiXuan | 1919 | 36 | 101 | 3 | 24 | 128 |
-| 3 | Sol Extra High | TanWeiXuan | 1856 | 37 | 90 | 8 | 30 | 128 |
-| 4 | Gpt 5 3 Codex Spark Extra High | TanWeiXuan | 1327 | 33 | 31 | 13 | 84 | 128 |
-| 5 | Gpt 5 6 Luna Light | TanWeiXuan | 1306 | 46 | 0 | 0 | 0 | 0 |
-| 6 | Luna Medium | TanWeiXuan | 1276 | 34 | 20 | 14 | 94 | 128 |
-| 7 | Mai Code 1 1 Flash High | renj1ete0 | 1214 | 44 | 0 | 0 | 0 | 0 |
+| 2 | Gemini 3 5 Flash High | renj1ete0 | 1940 | 46 | 0 | 0 | 0 | 0 |
+| 3 | Luna Max | TanWeiXuan | 1919 | 36 | 101 | 3 | 24 | 128 |
+| 4 | Sol Extra High | TanWeiXuan | 1856 | 37 | 90 | 8 | 30 | 128 |
+| 5 | Gpt 5 3 Codex Spark Extra High | TanWeiXuan | 1327 | 33 | 31 | 13 | 84 | 128 |
+| 6 | Gpt 5 6 Luna Light | TanWeiXuan | 1306 | 46 | 0 | 0 | 0 | 0 |
+| 7 | Luna Medium | TanWeiXuan | 1276 | 34 | 20 | 14 | 94 | 128 |
+| 8 | Mai Code 1 1 Flash High | renj1ete0 | 1214 | 44 | 0 | 0 | 0 | 0 |
 <!-- LEADERBOARD_END -->
 
 ## Reproducibility and security
