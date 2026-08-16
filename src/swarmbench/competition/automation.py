@@ -282,6 +282,38 @@ def _load_batches(directory: Path) -> list[dict[str, Any]]:
     return [json.loads(path.read_text(encoding="utf-8")) for path in sorted(directory.rglob("batch-*.json"))]
 
 
+def _matchup_progress_lines(games: list[dict[str, Any]]) -> list[str]:
+    matchups: dict[tuple[str, str], list[int]] = {}
+    for game in games:
+        left, right = sorted((game["controller_a"], game["controller_b"]))
+        totals = matchups.setdefault((left, right), [0, 0, 0, 0, 0, 0])
+        left_is_a = game["controller_a"] == left
+        result = game["result_a"] if left_is_a else 1.0 - game["result_a"]
+        totals[0] += 1
+        if result == 1.0:
+            totals[1] += 1
+        elif result == 0.5:
+            totals[2] += 1
+        else:
+            totals[3] += 1
+        totals[4] += game["score_a"] if left_is_a else game["score_b"]
+        totals[5] += game["score_b"] if left_is_a else game["score_a"]
+    if not matchups:
+        return []
+    limit = 10
+    lines = [
+        "#### Current batch matchups",
+        "",
+        "| Matchup | Games | Left W-D-L | Score (left–right) |",
+        "| --- | ---: | ---: | ---: |",
+    ]
+    for (left, right), (count, wins, draws, losses, score_left, score_right) in list(matchups.items())[:limit]:
+        lines.append(f"| `{left}` vs `{right}` | {count} | {wins}-{draws}-{losses} | {score_left}–{score_right} |")
+    if len(matchups) > limit:
+        lines.extend(("", f"_Showing {limit} of {len(matchups)} matchups in this batch; complete pairing details follow in the final report._"))
+    return lines
+
+
 def progress_summary(data: dict[str, Any], batches: list[dict[str, Any]], completed_index: int) -> str:
     plan, _ = validate_plan(data)
     games = []
@@ -304,20 +336,21 @@ def progress_summary(data: dict[str, Any], batches: list[dict[str, Any]], comple
     exceptions = sum(int(game[side].get("exceptions", 0)) for game in games for side in ("stats_a", "stats_b"))
     percent = round(100 * len(games) / len(plan.games)) if plan.games else 100
     pairings = len({game["pairing_id"] for game in games})
-    return "\n".join(
-        (
-            f"### Progress — {percent}%",
-            "",
-            f"Completed: {len(games)} / {len(plan.games)} games",
-            f"Current batch: {len(current_games)} games — {side_a_wins} side-A wins, {draws} draws, {side_b_wins} side-B wins; aggregate score {score_a}–{score_b}",
-            f"Pairings touched: {pairings} / {len(plan.pairings)}",
-            f"Controller exceptions: {exceptions}",
-            f"Hard timeouts: {hard}",
-            f"Soft-deadline misses: {soft}",
-            "",
-            "Current results are provisional; Glicko-2 updates are applied only when the full rating period completes.",
-        )
-    )
+    lines = [
+        f"### Progress — {percent}%",
+        "",
+        f"Completed: {len(games)} / {len(plan.games)} games",
+        f"Current batch: {len(current_games)} games — {side_a_wins} side-A wins, {draws} draws, {side_b_wins} side-B wins; aggregate score {score_a}–{score_b}",
+        f"Pairings touched: {pairings} / {len(plan.pairings)}",
+        f"Controller exceptions: {exceptions}",
+        f"Hard timeouts: {hard}",
+        f"Soft-deadline misses: {soft}",
+    ]
+    matchup_lines = _matchup_progress_lines(current_games)
+    if matchup_lines:
+        lines.extend(("", *matchup_lines))
+    lines.extend(("", "Current results are provisional; Glicko-2 updates are applied only when the full rating period completes."))
+    return "\n".join(lines)
 
 
 def _game_totals(games: tuple[dict[str, Any], ...]) -> tuple[int, int, int]:
