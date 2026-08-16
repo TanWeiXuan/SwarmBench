@@ -285,11 +285,20 @@ def _load_batches(directory: Path) -> list[dict[str, Any]]:
 def progress_summary(data: dict[str, Any], batches: list[dict[str, Any]], completed_index: int) -> str:
     plan, _ = validate_plan(data)
     games = []
+    current_games = []
     for index, batch in enumerate(batches):
-        games.extend(validate_batch(plan, batch, index))
+        validated = validate_batch(plan, batch, index)
+        games.extend(validated)
+        if index == completed_index:
+            current_games = validated
     expected_completed = sum(len(plan.batches[index]) for index in range(completed_index + 1))
     if len(games) != expected_completed:
         raise ValueError("progress result count mismatch")
+    side_a_wins = sum(game["result_a"] == 1.0 for game in current_games)
+    draws = sum(game["result_a"] == 0.5 for game in current_games)
+    side_b_wins = len(current_games) - side_a_wins - draws
+    score_a = sum(game["score_a"] for game in current_games)
+    score_b = sum(game["score_b"] for game in current_games)
     hard = sum(int(game[side].get("hard_timeouts", 0)) for game in games for side in ("stats_a", "stats_b"))
     soft = sum(int(game[side].get("missed_updates", 0)) for game in games for side in ("stats_a", "stats_b"))
     exceptions = sum(int(game[side].get("exceptions", 0)) for game in games for side in ("stats_a", "stats_b"))
@@ -300,6 +309,7 @@ def progress_summary(data: dict[str, Any], batches: list[dict[str, Any]], comple
             f"### Progress — {percent}%",
             "",
             f"Completed: {len(games)} / {len(plan.games)} games",
+            f"Current batch: {len(current_games)} games — {side_a_wins} side-A wins, {draws} draws, {side_b_wins} side-B wins; aggregate score {score_a}–{score_b}",
             f"Pairings touched: {pairings} / {len(plan.pairings)}",
             f"Controller exceptions: {exceptions}",
             f"Hard timeouts: {hard}",
