@@ -17,6 +17,20 @@
     {
       "author": "TanWeiXuan",
       "built_in": false,
+      "controller_id": "TanWeiXuan/Nemotron_3_5_Lightning",
+      "deviation": 41.19549661880605,
+      "display_name": "Nemotron 3 5 Lightning",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1736.4964009710304,
+      "version_sha": "74cf2b9f0662d525386b23759544c18579db1fb6",
+      "volatility": 0.059998239076972625,
+      "wins": 0
+    },
+    {
+      "author": "TanWeiXuan",
+      "built_in": false,
       "controller_id": "TanWeiXuan/gpt_5_3_codex_spark_extra_high",
       "deviation": 28.41252559663055,
       "display_name": "Gpt 5 3 Codex Spark Extra High",
