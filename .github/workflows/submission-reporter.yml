@@ -7,7 +7,7 @@ on:
 
 permissions:
   contents: write
-  actions: read
+  actions: write
   pull-requests: write
 
 jobs:
@@ -75,8 +75,23 @@ jobs:
                 if (pull.draft) {
                   await github.graphql(`mutation($id: ID!) { markPullRequestReadyForReview(input: {pullRequestId: $id}) { clientMutationId } }`, {id: pull.node_id});
                 }
-                await github.graphql(`mutation($id: ID!) { enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: SQUASH}) { clientMutationId } }`, {id: pull.node_id});
-                mergeNote = pull.draft ? '✅ Marked ready and enabled auto-merge' : '✅ Auto-merge enabled';
+                try {
+                  await github.graphql(`mutation($id: ID!) { enablePullRequestAutoMerge(input: {pullRequestId: $id, mergeMethod: SQUASH}) { clientMutationId } }`, {id: pull.node_id});
+                  mergeNote = pull.draft ? '✅ Marked ready and enabled auto-merge' : '✅ Auto-merge enabled';
+                } catch (error) {
+                  if (!error.message.includes('clean status')) throw error;
+                  const {data: merge} = await github.rest.pulls.merge({
+                    ...context.repo, pull_number: prNumber, sha: pull.head.sha, merge_method: 'squash'
+                  });
+                  if (!merge.merged) throw new Error(merge.message || 'merge was rejected');
+                  await github.rest.actions.createWorkflowDispatch({
+                    ...context.repo,
+                    workflow_id: 'submission-accepted.yml',
+                    ref: 'main',
+                    inputs: {pr_number: String(prNumber), head_sha: pull.head.sha}
+                  });
+                  mergeNote = pull.draft ? '✅ Marked ready and merged' : '✅ Merged';
+                }
               } catch (error) {
                 mergeNote = `⚠️ Validation passed; auto-merge could not be enabled (${error.message})`;
               }

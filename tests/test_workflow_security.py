@@ -21,19 +21,26 @@ def test_privileged_reporter_never_checks_out_or_runs_controller_code() -> None:
     text = workflow("submission-reporter.yml")
     assert "pull_request_target:" not in text
     assert "contents: write" in text
+    assert "actions: write" in text
     assert "pull-requests: write" in text
     assert "actions/checkout" not in text
     assert "python" not in text.lower()
     assert "submission.py" not in text
     assert "markPullRequestReadyForReview" in text
+    assert "github.rest.pulls.merge" in text
+    assert "submission-accepted.yml" in text
 
 
 def test_acceptance_workflow_checks_out_only_merged_main() -> None:
     text = workflow("submission-accepted.yml")
     assert "pull_request_target" in text
+    assert "workflow_dispatch:" in text
+    assert "actions: write" in text
     assert "ref: main" in text
     assert "ref: ${{ github.event.pull_request.head" not in text
     assert "competition.publisher" in text
+    assert "gh workflow run tests.yml" in text
+    assert "gh workflow run submission-validation.yml" in text
 
 
 def test_controller_dockerfile_drops_root() -> None:
