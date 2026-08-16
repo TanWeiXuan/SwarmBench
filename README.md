@@ -97,12 +97,12 @@ Only the latest rating state is committed; permanent tournament history lives in
 | 2 | Gpt 5 6 Sol Ultra | TanWeiXuan | 2091 | 33 | 55 | 7 | 6 | 68 |
 | 3 | Claude Opus 5 Max | renj1ete0 | 2085 | 30 | 92 | 32 | 8 | 132 |
 | 4 | Gpt 5 6 Terra Spark Ultra | TanWeiXuan | 2051 | 29 | 204 | 22 | 34 | 260 |
-| 5 | Gemini 3 5 Flash High | renj1ete0 | 1935 | 30 | 71 | 15 | 46 | 132 |
-| 6 | Luna Max | TanWeiXuan | 1852 | 28 | 155 | 14 | 91 | 260 |
-| 7 | Sol Extra High | TanWeiXuan | 1789 | 29 | 137 | 14 | 109 | 260 |
-| 8 | Gpt 5 3 Codex Spark Extra High | TanWeiXuan | 1361 | 27 | 83 | 25 | 152 | 260 |
-| 9 | Gpt 5 6 Luna Light | TanWeiXuan | 1317 | 29 | 46 | 11 | 75 | 132 |
-| 10 | Luna Medium | TanWeiXuan | 1281 | 27 | 56 | 30 | 174 | 260 |
+| 5 | Claude Opus 5 Apex | renj1ete0 | 1999 | 41 | 0 | 0 | 0 | 0 |
+| 6 | Gemini 3 5 Flash High | renj1ete0 | 1935 | 30 | 71 | 15 | 46 | 132 |
+| 7 | Luna Max | TanWeiXuan | 1852 | 28 | 155 | 14 | 91 | 260 |
+| 8 | Sol Extra High | TanWeiXuan | 1789 | 29 | 137 | 14 | 109 | 260 |
+| 9 | Gpt 5 3 Codex Spark Extra High | TanWeiXuan | 1361 | 27 | 83 | 25 | 152 | 260 |
+| 10 | Gpt 5 6 Luna Light | TanWeiXuan | 1317 | 29 | 46 | 11 | 75 | 132 |
 <!-- LEADERBOARD_END -->
 
 ## Reproducibility and security

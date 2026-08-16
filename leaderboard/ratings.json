@@ -157,6 +157,20 @@
     {
       "author": "renj1ete0",
       "built_in": false,
+      "controller_id": "renj1ete0/claude_opus_5_apex",
+      "deviation": 41.195496662892,
+      "display_name": "Claude Opus 5 Apex",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1999.097217492701,
+      "version_sha": "81cccfeb697a7546b582d27cad80f59aeae32438",
+      "volatility": 0.060003474442639364,
+      "wins": 0
+    },
+    {
+      "author": "renj1ete0",
+      "built_in": false,
       "controller_id": "renj1ete0/claude_opus_5_max",
       "deviation": 29.976238934499744,
       "display_name": "Claude Opus 5 Max",
