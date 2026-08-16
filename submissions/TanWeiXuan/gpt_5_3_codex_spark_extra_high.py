@@ -1,8 +1,8 @@
 """Lane-anchored dual-role controller authored by GPT 5.3 Codex Spark Extra High.
 
-Authorship: this file, including its strategy and implementation, was entirely
-coded by GPT 5.3 Codex Spark Extra High without human guidance. No human
-authorship was used for the source code or strategy choices.
+Authorship: this file, including its strategy and implementation, was initially
+entirely coded by GPT 5.3 Codex Spark Extra High without human guidance. A later
+bugfix in the guard-control path required human guidance and is now noted here.
 """
 
 from __future__ import annotations
@@ -180,8 +180,8 @@ class SwarmController(BaseSwarmController):
                 if self.goal.contains(escorted.position):
                     actions[drone.id] = self._steer(drone, escort_target, 1.0)
                 else:
-                    escort_x = self._clamp(escort.position[0] + 2.0 * self.direction, 0.2, self.width - 0.2)
-                    actions[drone.id] = self._steer(drone, (escort_x, escort.position[1]), 1.0)
+                    escort_x = self._clamp(escorted.position[0] + 2.0 * self.direction, 0.2, self.width - 0.2)
+                    actions[drone.id] = self._steer(drone, (escort_x, escorted.position[1]), 1.0)
                 continue
 
             enemy_id = self.hunter_targets.get(drone.id)
