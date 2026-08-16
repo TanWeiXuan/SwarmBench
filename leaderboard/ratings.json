@@ -141,6 +141,20 @@
       "wins": 66
     },
     {
+      "author": "renj1ete0",
+      "built_in": false,
+      "controller_id": "renj1ete0/mai_code_1_1_flash_high",
+      "deviation": 43.78093491460696,
+      "display_name": "Mai Code 1 1 Flash High",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1214.1685664771708,
+      "version_sha": "eb38668a09b14aa1a2b883b90aaa1c580cb4f3b6",
+      "volatility": 0.05999894332163991,
+      "wins": 0
+    },
+    {
       "author": "SwarmBench",
       "built_in": true,
       "controller_id": "rush",
