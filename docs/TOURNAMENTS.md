@@ -9,7 +9,7 @@ gh run list --workflow tournament.yml
 
 The scheduler targets about eight distinct opponents per controller at default size: roughly three quarters are nearby in current rating and one quarter explores more broadly. Unordered pairings are deduplicated. Default pairings use four deterministic scenarios and swap sides for each, yielding eight games.
 
-SwarmBench implements Glicko-2 with new-player defaults 1500 rating, 350 RD, and 0.06 volatility. Individual games provide win/draw/loss observations. Every participant is updated simultaneously from pre-period ratings; score differential does not affect Glicko.
+SwarmBench implements Glicko-2 with new-player defaults 1500 rating, 350 RD, and 0.06 volatility. Individual games provide win/draw/loss observations. Every participant, including baseline controllers, is updated simultaneously from pre-period ratings; score differential does not affect Glicko.
 
 ## Five-stage trust boundary
 

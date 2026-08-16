@@ -16,11 +16,11 @@ The required workflow performs:
 
 1. PR shape/path/size and source/API/import validation.
 2. One obstacle-free 90 s smoke test with no opposing team. A nonzero score is required; defenders need not score.
-3. Four deterministic scenario seeds against baseline anchors with a side swap for every opponent/seed.
+3. Four deterministic scenario seeds against every baseline anchor and up to eight existing community controllers, with a side swap for every opponent/seed. Small community pools are used in full; larger pools use a deterministic mix of nearby, low-rated, and high-rated opponents.
 4. Strict calibration artifact validation and a provisional Glicko-2 rating.
 5. The required `Submission Gate` check.
 
-The sticky PR comment reports job/calibration-batch progress. Successful validation enables squash auto-merge. After merge, a trusted job downloads the SHA/path-bound calibration artifact, validates only primitive JSON, and opens a current-rating bot PR. No privileged job checks out a PR head or imports controller code.
+The sticky PR comment reports job/calibration-batch progress. During calibration, every opponent keeps its existing rating; only the submitted controller receives the provisional rating. Successful validation enables squash auto-merge. After merge, a trusted job downloads the SHA/path-bound calibration artifact, validates only primitive JSON, and opens a current-rating bot PR. No privileged job checks out a PR head or imports controller code.
 
 ## Timing and state
 
@@ -34,4 +34,3 @@ python -m swarmbench match --controller-a submissions/you/controller.py --contro
 ```
 
 These commands use the simpler local subprocess backend. Local execution is not a security sandbox; run only code you trust.
-

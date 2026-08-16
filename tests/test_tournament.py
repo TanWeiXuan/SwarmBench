@@ -90,6 +90,33 @@ def test_exhibition_does_not_modify_ratings() -> None:
     assert outcome.ratings_after == state
 
 
+def test_official_games_update_baseline_and_community_ratings() -> None:
+    state = {
+        "rush": RatingRecord("rush", "Rush", "SwarmBench", built_in=True),
+        "defend": RatingRecord("defend", "Defend", "SwarmBench", built_in=True),
+        "alice/controller": RatingRecord("alice/controller", "Controller", "alice"),
+    }
+    plan = create_plan(state, 5, mode="official", size="small")
+    assert {frozenset((game.controller_a, game.controller_b)) for game in plan.games} == {
+        frozenset(("rush", "defend")),
+        frozenset(("rush", "alice/controller")),
+        frozenset(("defend", "alice/controller")),
+    }
+    batches = complete_batches(plan)
+    for batch in batches:
+        for game in batch["games"]:
+            winner = "rush" if "rush" in {game["controller_a"], game["controller_b"]} else "defend"
+            winner_is_a = game["controller_a"] == winner
+            game["score_a"], game["score_b"] = ((1, 0) if winner_is_a else (0, 1))
+            game["result_a"] = 1.0 if winner_is_a else 0.0
+    outcome = aggregate_batches(plan, batches, state)
+
+    assert all(outcome.ratings_after[key].games > 0 for key in state)
+    assert all(outcome.ratings_after[key] != state[key] for key in state)
+    assert outcome.ratings_after["rush"].rating > state["rush"].rating
+    assert outcome.ratings_after["alice/controller"].rating < state["alice/controller"].rating
+
+
 def test_missing_duplicate_or_wrong_identity_is_rejected() -> None:
     state = records()
     plan = create_plan(state, 5, mode="official", size="small")
