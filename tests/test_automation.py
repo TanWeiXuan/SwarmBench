@@ -119,7 +119,6 @@ def test_live_report_owns_discussion_until_final_artifact(tmp_path: Path, monkey
         {"name": f"Compute batch {index + 1} (untrusted controllers)", "conclusion": "success"}
         for index in range(5)
     ] + [{"name": "Validate all batches and publish atomically", "conclusion": "success"}]
-    updates = []
     comments = []
 
     def download(_repository: str, _run_id: str, name: str, destination: Path) -> None:
@@ -143,14 +142,13 @@ def test_live_report_owns_discussion_until_final_artifact(tmp_path: Path, monkey
     monkeypatch.setattr(automation, "_artifact_names", lambda *_args: artifacts)
     monkeypatch.setattr(automation, "_run_jobs", lambda *_args: jobs)
     monkeypatch.setattr(automation, "_download_artifact", download)
-    monkeypatch.setattr(automation, "_update_discussion", lambda _id, body: updates.append(body))
     monkeypatch.setattr(automation, "_add_comment", lambda _id, body: comments.append(body))
 
     discussion = live_report(data, "owner/repo", "123", tmp_path, poll_seconds=0)
 
     assert discussion["id"] == "D1"
-    assert len(updates) == 6 and updates[-1].startswith("## Status: COMPLETE")
     assert len(comments) == 6 and comments[-1].startswith("### Final result")
+    assert "## Status: COMPLETE" in comments[-1]
 
 
 def test_readme_leaderboard_contains_community_only(tmp_path: Path) -> None:
