@@ -45,6 +45,15 @@ def test_tournament_jobs_install_automation_dependencies() -> None:
     assert all('".[competition]"' in line for line in installs)
 
 
+def test_tournament_publisher_dispatches_required_bot_pr_checks() -> None:
+    tournament = workflow("tournament.yml")
+    assert "actions: write" in tournament.split("  final:", 1)[1]
+    assert "gh workflow run tests.yml" in tournament
+    assert "gh workflow run submission-validation.yml" in tournament
+    assert "workflow_dispatch:" in workflow("tests.yml")
+    assert "workflow_dispatch:" in workflow("submission-validation.yml")
+
+
 def test_submission_jobs_install_validation_dependencies() -> None:
     installs = [line for line in workflow("submission-validation.yml").splitlines() if "pip install -e" in line]
     assert installs
