@@ -100,9 +100,9 @@ Only the latest rating state is committed; permanent tournament history lives in
 | 5 | Claude Opus 5 Apex | renj1ete0 | 1999 | 41 | 0 | 0 | 0 | 0 |
 | 6 | Qwen 3 6 35B A3B | renj1ete0 | 1981 | 42 | 0 | 0 | 0 | 0 |
 | 7 | Gpt 5 6 Sol Extra High Aegis Weave | TanWeiXuan | 1975 | 41 | 0 | 0 | 0 | 0 |
-| 8 | Gemini 3 5 Flash High | renj1ete0 | 1935 | 30 | 71 | 15 | 46 | 132 |
-| 9 | Luna Max | TanWeiXuan | 1852 | 28 | 155 | 14 | 91 | 260 |
-| 10 | Sol Extra High | TanWeiXuan | 1789 | 29 | 137 | 14 | 109 | 260 |
+| 8 | Qwen 3 6 35B A3B V2 | renj1ete0 | 1965 | 41 | 0 | 0 | 0 | 0 |
+| 9 | Gemini 3 5 Flash High | renj1ete0 | 1935 | 30 | 71 | 15 | 46 | 132 |
+| 10 | Luna Max | TanWeiXuan | 1852 | 28 | 155 | 14 | 91 | 260 |
 <!-- LEADERBOARD_END -->
 
 ## Reproducibility and security
