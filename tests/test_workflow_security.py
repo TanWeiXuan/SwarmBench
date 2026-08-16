@@ -39,6 +39,7 @@ def test_acceptance_workflow_checks_out_only_merged_main() -> None:
     assert "ref: main" in text
     assert "ref: ${{ github.event.pull_request.head" not in text
     assert "competition.publisher" in text
+    assert 'pip install -e ".[competition]"' in text
     assert "gh workflow run tests.yml" in text
     assert "gh workflow run submission-validation.yml" in text
 
