@@ -19,16 +19,32 @@ def test_untrusted_submission_workflow_is_read_only() -> None:
 
 def test_privileged_reporter_never_checks_out_or_runs_controller_code() -> None:
     text = workflow("submission-reporter.yml")
+    workflow_permissions = text.split("jobs:", 1)[0]
     assert "pull_request_target:" not in text
-    assert "contents: write" in text
-    assert "actions: write" in text
-    assert "pull-requests: write" in text
+    assert "contents: read" in workflow_permissions
+    assert "actions: read" in workflow_permissions
+    assert "pull-requests: read" in workflow_permissions
+    assert "contents: write" not in workflow_permissions
+    assert "actions: write" not in workflow_permissions
+    assert "pull-requests: write" not in workflow_permissions
     assert "actions/checkout" not in text
     assert "python" not in text.lower()
     assert "submission.py" not in text
     assert "markPullRequestReadyForReview" in text
     assert "github.rest.pulls.merge" in text
-    assert "submission-accepted.yml" in text
+
+
+def test_privileged_reporter_merges_with_github_app_token() -> None:
+    text = workflow("submission-reporter.yml")
+    assert "actions/create-github-app-token@v3" in text
+    assert "app-id: ${{ vars.SWARMBENCH_APP_ID }}" in text
+    assert "private-key: ${{ secrets.SWARMBENCH_APP_PRIVATE_KEY }}" in text
+    assert "permission-actions: read" in text
+    assert "permission-contents: write" in text
+    assert "permission-pull-requests: write" in text
+    assert "github-token: ${{ steps.app-token.outputs.token }}" in text
+    assert "createWorkflowDispatch" not in text
+    assert "submission-accepted.yml" not in text
 
 
 def test_privileged_reporter_resolves_live_fork_pull_requests_by_validated_head() -> None:
