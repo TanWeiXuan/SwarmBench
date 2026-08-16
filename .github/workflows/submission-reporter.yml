@@ -30,13 +30,19 @@ jobs:
             const run = context.payload.workflow_run;
             let prNumber = run.pull_requests?.[0]?.number;
             if (!prNumber) {
-              const {data: pulls} = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-                ...context.repo, commit_sha: run.head_sha
-              });
+              const headOwner = run.head_repository?.owner?.login;
+              const {data: pulls} = headOwner && run.head_branch
+                ? await github.rest.pulls.list({
+                    ...context.repo,
+                    state: 'open',
+                    base: context.payload.repository.default_branch,
+                    head: `${headOwner}:${run.head_branch}`,
+                    per_page: 100
+                  })
+                : {data: []};
               const pull = pulls.find(candidate =>
-                candidate.state === 'open'
-                && candidate.base.ref === context.payload.repository.default_branch
-                && candidate.head.sha === run.head_sha
+                candidate.head.sha === run.head_sha
+                && candidate.head.repo?.full_name === run.head_repository.full_name
               );
               prNumber = pull?.number;
             }
