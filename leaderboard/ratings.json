@@ -143,6 +143,20 @@
     {
       "author": "renj1ete0",
       "built_in": false,
+      "controller_id": "renj1ete0/gemini_3_5_flash_high",
+      "deviation": 45.96924282769294,
+      "display_name": "Gemini 3 5 Flash High",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1940.3852974146935,
+      "version_sha": "c02ac92d9a0f8237cd5481b4a3ba38a4b366b09a",
+      "volatility": 0.06000199054028549,
+      "wins": 0
+    },
+    {
+      "author": "renj1ete0",
+      "built_in": false,
       "controller_id": "renj1ete0/mai_code_1_1_flash_high",
       "deviation": 43.78093491460696,
       "display_name": "Mai Code 1 1 Flash High",
