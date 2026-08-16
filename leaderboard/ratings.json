@@ -239,6 +239,20 @@
       "wins": 21
     },
     {
+      "author": "renj1ete0",
+      "built_in": false,
+      "controller_id": "renj1ete0/qwen_3_6_35b_a3b",
+      "deviation": 41.50002885693201,
+      "display_name": "Qwen 3 6 35B A3B",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1981.045948689895,
+      "version_sha": "bf636f60384098aa80f3ac5b1798c14c0ab1dd5e",
+      "volatility": 0.06000299550854653,
+      "wins": 0
+    },
+    {
       "author": "SwarmBench",
       "built_in": true,
       "controller_id": "rush",
