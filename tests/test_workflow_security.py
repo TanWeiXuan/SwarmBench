@@ -44,6 +44,20 @@ def test_privileged_reporter_resolves_live_fork_pull_requests_by_validated_head(
     assert "candidate.head.repo?.full_name === run.head_repository.full_name" in text
 
 
+def test_privileged_reporter_downloads_results_only_for_submission_prs() -> None:
+    text = workflow("submission-reporter.yml")
+    resolve = text.index("- name: Resolve validated submission PR")
+    download = text.index("- name: Download final validated result")
+    update = text.index("- name: Update sticky progress and enable auto-merge")
+    download_step = text[download:update]
+    assert resolve < download < update
+    assert "core.setOutput('pr_number', prNumber)" in text[resolve:download]
+    assert "steps.submission.outputs.pr_number" in download_step
+    assert "continue-on-error" not in download_step
+    assert "if: ${{ steps.submission.outputs.pr_number }}" in text[update:]
+    assert "const prNumber = Number(process.env.PR_NUMBER);" in text[update:]
+
+
 def test_acceptance_workflow_checks_out_only_merged_main() -> None:
     text = workflow("submission-accepted.yml")
     assert "pull_request_target" in text
