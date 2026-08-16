@@ -3,6 +3,20 @@
     {
       "author": "TanWeiXuan",
       "built_in": false,
+      "controller_id": "TanWeiXuan/GPT_5_6_Sol_Ultra",
+      "deviation": 41.478910292670726,
+      "display_name": "Gpt 5 6 Sol Ultra",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1985.9050237312,
+      "version_sha": "97230082058c9035366ff814ac6e8deff6db8c6a",
+      "volatility": 0.06000312282566649,
+      "wins": 0
+    },
+    {
+      "author": "TanWeiXuan",
+      "built_in": false,
       "controller_id": "TanWeiXuan/gpt_5_3_codex_spark_extra_high",
       "deviation": 28.968143654842827,
       "display_name": "Gpt 5 3 Codex Spark Extra High",
