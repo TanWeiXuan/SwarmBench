@@ -57,10 +57,11 @@ Only the latest rating state is committed; permanent tournament history lives in
 <!-- LEADERBOARD_START -->
 | Rank | Controller | Author | Rating | RD | W | D | L | Games |
 | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | Luna Max | TanWeiXuan | 1923 | 54 | 0 | 0 | 0 | 0 |
-| 2 | Sol Extra High | TanWeiXuan | 1902 | 60 | 0 | 0 | 0 | 0 |
-| 3 | Luna Medium | TanWeiXuan | 1306 | 58 | 0 | 0 | 0 | 0 |
-| 4 | Gpt 5 3 Codex Spark Extra High | TanWeiXuan | 1255 | 52 | 0 | 0 | 0 | 0 |
+| 1 | Gpt 5 6 Terra Spark Ultra | TanWeiXuan | 1998 | 49 | 0 | 0 | 0 | 0 |
+| 2 | Luna Max | TanWeiXuan | 1923 | 54 | 0 | 0 | 0 | 0 |
+| 3 | Sol Extra High | TanWeiXuan | 1902 | 60 | 0 | 0 | 0 | 0 |
+| 4 | Luna Medium | TanWeiXuan | 1306 | 58 | 0 | 0 | 0 | 0 |
+| 5 | Gpt 5 3 Codex Spark Extra High | TanWeiXuan | 1255 | 52 | 0 | 0 | 0 | 0 |
 <!-- LEADERBOARD_END -->
 
 ## Reproducibility and security
