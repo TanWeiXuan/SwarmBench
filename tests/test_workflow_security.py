@@ -36,13 +36,23 @@ def test_privileged_reporter_never_checks_out_or_runs_controller_code() -> None:
 
 def test_privileged_reporter_merges_with_github_app_token() -> None:
     text = workflow("submission-reporter.yml")
+    read_jobs = text.index("- name: Read validation jobs")
+    app_token = text.index("- name: Create short-lived submission token")
+    update = text.index("- name: Update sticky progress and enable auto-merge")
+    app_token_step = text[app_token:text.index("- name: Download final validated result")]
+    update_step = text[update:]
     assert "actions/create-github-app-token@v3" in text
     assert "app-id: ${{ vars.SWARMBENCH_APP_ID }}" in text
     assert "private-key: ${{ secrets.SWARMBENCH_APP_PRIVATE_KEY }}" in text
-    assert "permission-actions: read" in text
-    assert "permission-contents: write" in text
-    assert "permission-pull-requests: write" in text
-    assert "github-token: ${{ steps.app-token.outputs.token }}" in text
+    assert read_jobs < app_token < update
+    assert "github.rest.actions.listJobsForWorkflowRun" in text[read_jobs:app_token]
+    assert "permission-actions" not in app_token_step
+    assert "permission-contents: write" in app_token_step
+    assert "permission-pull-requests: write" in app_token_step
+    assert "github-token: ${{ steps.app-token.outputs.token }}" in update_step
+    assert "github.rest.actions.listJobsForWorkflowRun" not in update_step
+    assert "VALIDATION_JOBS: ${{ steps.validation-jobs.outputs.jobs }}" in update_step
+    assert "JSON.parse(process.env.VALIDATION_JOBS)" in update_step
     assert "createWorkflowDispatch" not in text
     assert "submission-accepted.yml" not in text
 

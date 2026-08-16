@@ -44,6 +44,19 @@ jobs:
             if (files.some(file => file.filename.startsWith('submissions/'))) {
               core.setOutput('pr_number', prNumber);
             }
+      - name: Read validation jobs
+        id: validation-jobs
+        if: ${{ steps.submission.outputs.pr_number }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const {data} = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner, repo: context.repo.repo, run_id: run.id, per_page: 100
+            });
+            core.setOutput('jobs', JSON.stringify(
+              data.jobs.map(job => ({name: job.name, conclusion: job.conclusion}))
+            ));
       - name: Create short-lived submission token
         id: app-token
         if: ${{ steps.submission.outputs.pr_number }}
@@ -51,7 +64,6 @@ jobs:
         with:
           app-id: ${{ vars.SWARMBENCH_APP_ID }}
           private-key: ${{ secrets.SWARMBENCH_APP_PRIVATE_KEY }}
-          permission-actions: read
           permission-contents: write
           permission-pull-requests: write
       - name: Download final validated result
@@ -67,16 +79,15 @@ jobs:
         uses: actions/github-script@v7
         env:
           PR_NUMBER: ${{ steps.submission.outputs.pr_number }}
+          VALIDATION_JOBS: ${{ steps.validation-jobs.outputs.jobs }}
         with:
           github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const run = context.payload.workflow_run;
             const prNumber = Number(process.env.PR_NUMBER);
-            const {data: jobs} = await github.rest.actions.listJobsForWorkflowRun({
-              owner: context.repo.owner, repo: context.repo.repo, run_id: run.id, per_page: 100
-            });
+            const jobs = JSON.parse(process.env.VALIDATION_JOBS);
             const mark = (prefix) => {
-              const matches = jobs.jobs.filter(job => job.name.startsWith(prefix));
+              const matches = jobs.filter(job => job.name.startsWith(prefix));
               if (!matches.length) return '⏳';
               if (matches.every(job => job.conclusion === 'success')) return '✅';
               if (matches.some(job => job.conclusion && job.conclusion !== 'success')) return '❌';
@@ -86,7 +97,7 @@ jobs:
             body += `${mark('Submission structure')} Submission structure\n`;
             body += `${mark('Controller import and API')} Controller import/API\n`;
             body += `${mark('Empty-arena smoke and timing')} Empty-arena smoke test\n`;
-            const calibration = jobs.jobs.filter(job => job.name.startsWith('Calibration seed'));
+            const calibration = jobs.filter(job => job.name.startsWith('Calibration seed'));
             const done = calibration.filter(job => job.conclusion === 'success').length;
             body += `${mark('Calibration seed')} Calibration tournament — ${done} / 4 seed batches\n`;
             body += `${mark('Submission Gate')} Initial Glicko-2 and Submission Gate\n`;
