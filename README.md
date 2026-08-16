@@ -102,7 +102,7 @@ Only the latest rating state is committed; permanent tournament history lives in
 | 7 | Gpt 5 6 Sol Extra High Aegis Weave | TanWeiXuan | 1975 | 41 | 1 | 2 | 1 | 4 |
 | 8 | Qwen 3 6 35B A3B V2 | renj1ete0 | 1972 | 42 | 3 | 1 | 0 | 4 |
 | 9 | Gemini 3 5 Flash High | renj1ete0 | 1934 | 32 | 73 | 16 | 47 | 136 |
-| 10 | Luna Max | TanWeiXuan | 1860 | 30 | 158 | 15 | 91 | 264 |
+| 10 | Opencodezen Bigpickle | TanWeiXuan | 1921 | 41 | 0 | 0 | 0 | 0 |
 <!-- LEADERBOARD_END -->
 
 ## Reproducibility and security

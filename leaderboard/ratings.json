@@ -17,6 +17,20 @@
     {
       "author": "TanWeiXuan",
       "built_in": false,
+      "controller_id": "TanWeiXuan/OpenCodeZen_BigPickle",
+      "deviation": 41.19549664655445,
+      "display_name": "Opencodezen Bigpickle",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1921.3368411891308,
+      "version_sha": "b6ec736991af9a5dc587178822eebf6a78710e53",
+      "volatility": 0.060001534353234035,
+      "wins": 0
+    },
+    {
+      "author": "TanWeiXuan",
+      "built_in": false,
       "controller_id": "TanWeiXuan/gpt_5_3_codex_spark_extra_high",
       "deviation": 28.41252559663055,
       "display_name": "Gpt 5 3 Codex Spark Extra High",
