@@ -1,11 +1,75 @@
 {
   "controllers": [
-    {"author": "SwarmBench", "built_in": true, "controller_id": "assignment", "deviation": 350.0, "display_name": "Assignment", "draws": 0, "games": 0, "losses": 0, "rating": 1500.0, "version_sha": "", "volatility": 0.06, "wins": 0},
-    {"author": "SwarmBench", "built_in": true, "controller_id": "defend", "deviation": 350.0, "display_name": "Defend", "draws": 0, "games": 0, "losses": 0, "rating": 1500.0, "version_sha": "", "volatility": 0.06, "wins": 0},
-    {"author": "SwarmBench", "built_in": true, "controller_id": "greedy_value", "deviation": 350.0, "display_name": "Greedy Value", "draws": 0, "games": 0, "losses": 0, "rating": 1500.0, "version_sha": "", "volatility": 0.06, "wins": 0},
-    {"author": "SwarmBench", "built_in": true, "controller_id": "potential_field", "deviation": 350.0, "display_name": "Potential Field", "draws": 0, "games": 0, "losses": 0, "rating": 1500.0, "version_sha": "", "volatility": 0.06, "wins": 0},
-    {"author": "SwarmBench", "built_in": true, "controller_id": "rush", "deviation": 350.0, "display_name": "Rush", "draws": 0, "games": 0, "losses": 0, "rating": 1500.0, "version_sha": "", "volatility": 0.06, "wins": 0}
+    {
+      "author": "SwarmBench",
+      "built_in": true,
+      "controller_id": "assignment",
+      "deviation": 88.79622591742657,
+      "display_name": "Assignment",
+      "draws": 2,
+      "games": 32,
+      "losses": 10,
+      "rating": 1651.83988792145,
+      "version_sha": "",
+      "volatility": 0.059997515933653295,
+      "wins": 20
+    },
+    {
+      "author": "SwarmBench",
+      "built_in": true,
+      "controller_id": "defend",
+      "deviation": 88.79622589056045,
+      "display_name": "Defend",
+      "draws": 1,
+      "games": 32,
+      "losses": 12,
+      "rating": 1606.2879214806983,
+      "version_sha": "",
+      "volatility": 0.05999719733578549,
+      "wins": 19
+    },
+    {
+      "author": "SwarmBench",
+      "built_in": true,
+      "controller_id": "greedy_value",
+      "deviation": 88.79622586527535,
+      "display_name": "Greedy Value",
+      "draws": 3,
+      "games": 32,
+      "losses": 14,
+      "rating": 1515.1839887743095,
+      "version_sha": "",
+      "volatility": 0.05999689748537428,
+      "wins": 15
+    },
+    {
+      "author": "SwarmBench",
+      "built_in": true,
+      "controller_id": "potential_field",
+      "deviation": 88.79622586685565,
+      "display_name": "Potential Field",
+      "draws": 0,
+      "games": 32,
+      "losses": 17,
+      "rating": 1469.6320224503002,
+      "version_sha": "",
+      "volatility": 0.059996916225843,
+      "wins": 15
+    },
+    {
+      "author": "SwarmBench",
+      "built_in": true,
+      "controller_id": "rush",
+      "deviation": 88.79622599960986,
+      "display_name": "Rush",
+      "draws": 0,
+      "games": 32,
+      "losses": 24,
+      "rating": 1257.0561788759776,
+      "version_sha": "",
+      "volatility": 0.05999849051183883,
+      "wins": 8
+    }
   ],
   "schema_version": 1
 }
-
