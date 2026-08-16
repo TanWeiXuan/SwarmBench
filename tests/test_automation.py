@@ -57,33 +57,41 @@ def test_plan_tampering_is_rejected() -> None:
 def test_progress_summary_validates_each_completed_batch() -> None:
     data = prepare_plan(records(), seed=42, mode="official", size="small", run_id="123", repository="owner/repo")
     plan, _ = validate_plan(data)
-    batch = {
-        "format_version": TOURNAMENT_FORMAT_VERSION,
-        "engine_version": ENGINE_VERSION,
-        "tournament_seed": plan.seed,
-        "batch_index": 0,
-        "expected_game_ids": sorted(plan.batches[0]),
-        "games": [],
-    }
     games = {game.game_id: game for game in plan.games}
-    for game_id in plan.batches[0]:
-        game = games[game_id]
-        batch["games"].append(
-            {
-                "game_id": game.game_id,
-                "pairing_id": game.pairing_id,
-                "controller_a": game.controller_a,
-                "controller_b": game.controller_b,
-                "scenario_seed": game.scenario_seed,
-                "score_a": 0,
-                "score_b": 0,
-                "result_a": 0.5,
-                "stats_a": {},
-                "stats_b": {},
-            }
-        )
-    summary = progress_summary(data, [batch], 0)
+    batches = []
+    for batch_index in range(2):
+        batch = {
+            "format_version": TOURNAMENT_FORMAT_VERSION,
+            "engine_version": ENGINE_VERSION,
+            "tournament_seed": plan.seed,
+            "batch_index": batch_index,
+            "expected_game_ids": sorted(plan.batches[batch_index]),
+            "games": [],
+        }
+        for game_id in plan.batches[batch_index]:
+            game = games[game_id]
+            batch["games"].append(
+                {
+                    "game_id": game.game_id,
+                    "pairing_id": game.pairing_id,
+                    "controller_a": game.controller_a,
+                    "controller_b": game.controller_b,
+                    "scenario_seed": game.scenario_seed,
+                    "score_a": 1 if batch_index == 0 else 0,
+                    "score_b": 0,
+                    "result_a": 1.0 if batch_index == 0 else 0.5,
+                    "stats_a": {},
+                    "stats_b": {},
+                }
+            )
+        batches.append(batch)
+    summary = progress_summary(data, batches, 1)
     assert "Completed:" in summary and "provisional" in summary
+    current_count = len(batches[1]["games"])
+    assert (
+        f"Current batch: {current_count} games — 0 side-A wins, {current_count} draws, "
+        "0 side-B wins; aggregate score 0–0"
+    ) in summary
 
 
 def test_live_report_owns_discussion_until_final_artifact(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
