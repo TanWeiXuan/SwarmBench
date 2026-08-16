@@ -17,6 +17,20 @@
     {
       "author": "TanWeiXuan",
       "built_in": false,
+      "controller_id": "TanWeiXuan/gpt_5_6_terra_spark_ultra",
+      "deviation": 49.43686397821029,
+      "display_name": "Gpt 5 6 Terra Spark Ultra",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1997.7986958406468,
+      "version_sha": "a4ecd297ecc48808fcc8ea7f853275c27a66f2ff",
+      "volatility": 0.06000345959920792,
+      "wins": 0
+    },
+    {
+      "author": "TanWeiXuan",
+      "built_in": false,
       "controller_id": "TanWeiXuan/luna_max",
       "deviation": 53.574014322803194,
       "display_name": "Luna Max",
