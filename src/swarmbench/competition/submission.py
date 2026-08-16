@@ -22,9 +22,11 @@ from swarmbench.match import controller_seed, run_match
 from swarmbench.version import CALIBRATION_VERSION, CONTROLLER_API_VERSION, ENGINE_VERSION
 
 from .glicko2 import GlickoRating, update_rating
+from .ratings import RatingRecord, load_ratings
 
 MAX_SUBMISSION_BYTES = 5 * 1024 * 1024
 ALLOWED_THIRD_PARTY_IMPORTS = {"numpy", "scipy", "torch", "networkx", "swarmbench"}
+MAX_COMMUNITY_CALIBRATION_OPPONENTS = 8
 
 
 class SubmissionValidationError(ValueError):
@@ -172,12 +174,50 @@ def calibration_seed(seed_index: int) -> int:
     return int.from_bytes(hashlib.sha256(f"calibration:{CALIBRATION_VERSION}:{seed_index}".encode()).digest()[:8], "big") % (2**63)
 
 
+def calibration_opponents(ratings: dict[str, RatingRecord], submission_id: str) -> tuple[RatingRecord, ...]:
+    try:
+        baselines = [ratings[name] for name in BASELINE_NAMES]
+    except KeyError as error:
+        raise SubmissionValidationError(f"missing baseline rating: {error.args[0]}") from error
+
+    parts = PurePosixPath(submission_id.replace("\\", "/")).parts
+    subject_id = f"{parts[1]}/{PurePosixPath(parts[2]).stem}" if len(parts) == 3 and parts[0] == "submissions" else submission_id
+    subject = ratings.get(subject_id)
+    subject_rating = subject.rating if subject else 1500.0
+    community = [record for record in ratings.values() if not record.built_in and record.controller_id != subject_id]
+    community.sort(key=lambda record: (abs(record.rating - subject_rating), record.controller_id))
+    if len(community) <= MAX_COMMUNITY_CALIBRATION_OPPONENTS:
+        selected = community
+    else:
+        selected = community[:4]
+        remaining = sorted(
+            (record for record in community if record not in selected),
+            key=lambda record: (record.rating, record.controller_id),
+        )
+        selected += remaining[:2] + remaining[-2:]
+    return tuple(baselines + selected)
+
+
+def _opponent_path(record: RatingRecord, repository_root: Path) -> Path:
+    if record.built_in:
+        return baseline_path(record.controller_id)
+    parts = PurePosixPath(record.controller_id).parts
+    if len(parts) != 2 or any(part in {"", ".", ".."} for part in parts):
+        raise SubmissionValidationError(f"invalid community controller id: {record.controller_id}")
+    path = repository_root / "submissions" / parts[0] / f"{parts[1]}.py"
+    if not path.is_file():
+        raise SubmissionValidationError(f"community controller file not found: {path.as_posix()}")
+    return path
+
+
 def calibrate_seed(
     path: str | Path,
     *,
     submission_id: str,
     head_sha: str,
     seed_index: int,
+    ratings: dict[str, RatingRecord],
+    repository_root: Path = Path("."),
     duration: float = 90.0,
     backend: str = "local",
 ) -> dict[str, Any]:
@@ -185,16 +225,24 @@ def calibrate_seed(
     seed = calibration_seed(seed_index)
     games = []
     subject_results: list[tuple[GlickoRating, float]] = []
-    for opponent in BASELINE_NAMES:
-        first = run_match(path, baseline_path(opponent), seed=seed, duration=duration, backend=backend)
-        second = run_match(baseline_path(opponent), path, seed=seed, duration=duration, backend=backend)
+    opponents = calibration_opponents(ratings, submission_id)
+    for opponent in opponents:
+        opponent_path = _opponent_path(opponent, repository_root)
+        first = run_match(path, opponent_path, seed=seed, duration=duration, backend=backend)
+        second = run_match(opponent_path, path, seed=seed, duration=duration, backend=backend)
         first_score = 0.5 if first.winner is None else (1.0 if first.winner is Team.A else 0.0)
         second_score = 0.5 if second.winner is None else (1.0 if second.winner is Team.B else 0.0)
-        subject_results.extend(((GlickoRating(), first_score), (GlickoRating(), second_score)))
+        subject_results.extend(((opponent.glicko, first_score), (opponent.glicko, second_score)))
+        opponent_fields = {
+            "opponent": opponent.controller_id,
+            "opponent_rating": opponent.rating,
+            "opponent_deviation": opponent.deviation,
+            "opponent_volatility": opponent.volatility,
+        }
         games.extend(
             (
-                {"opponent": opponent, "side": "A", "result": first_score, "score_for": first.score_a, "score_against": first.score_b, "timing": first.stats_a},
-                {"opponent": opponent, "side": "B", "result": second_score, "score_for": second.score_b, "score_against": second.score_a, "timing": second.stats_b},
+                {**opponent_fields, "side": "A", "result": first_score, "score_for": first.score_a, "score_against": first.score_b, "timing": first.stats_a},
+                {**opponent_fields, "side": "B", "result": second_score, "score_for": second.score_b, "score_against": second.score_a, "timing": second.stats_b},
             )
         )
     provisional = update_rating(GlickoRating(), subject_results)
@@ -207,7 +255,7 @@ def calibrate_seed(
         "head_sha": head_sha,
         "seed_index": seed_index,
         "scenario_seed": seed,
-        "opponents": list(BASELINE_NAMES),
+        "opponents": [opponent.controller_id for opponent in opponents],
         "games": games,
         "provisional": {
             "rating": provisional.rating,
@@ -221,7 +269,7 @@ def aggregate_calibration(parts: list[dict[str, Any]], *, submission_id: str, su
     if not parts or len({part.get("seed_index") for part in parts}) != len(parts):
         raise SubmissionValidationError("missing or duplicate calibration seed results")
     games = []
-    opponents = set()
+    opponents: list[str] | None = None
     for part in parts:
         if (
             part.get("schema") != "swarmbench-calibration-seed-v1"
@@ -231,12 +279,31 @@ def aggregate_calibration(parts: list[dict[str, Any]], *, submission_id: str, su
             or part.get("head_sha") != head_sha
         ):
             raise SubmissionValidationError("calibration identity mismatch")
+        part_opponents = part.get("opponents")
+        if not isinstance(part_opponents, list) or any(not isinstance(value, str) for value in part_opponents):
+            raise SubmissionValidationError("invalid calibration opponent list")
+        if opponents is None:
+            opponents = part_opponents
+        elif part_opponents != opponents:
+            raise SubmissionValidationError("calibration opponent mismatch")
         games.extend(part.get("games", []))
-        opponents.update(part.get("opponents", []))
     results = [float(game["result"]) for game in games]
     if any(result not in {0.0, 0.5, 1.0} for result in results):
         raise SubmissionValidationError("invalid calibration game result")
-    provisional = update_rating(GlickoRating(), [(GlickoRating(), result) for result in results])
+    opponent_ratings = []
+    for game in games:
+        try:
+            opponent_rating = GlickoRating(
+                float(game["opponent_rating"]),
+                float(game["opponent_deviation"]),
+                float(game["opponent_volatility"]),
+            )
+        except (KeyError, TypeError, ValueError) as error:
+            raise SubmissionValidationError("invalid calibration opponent rating") from error
+        if not 0 <= opponent_rating.rating <= 4000 or not 0 <= opponent_rating.deviation <= 350 or not 0.001 <= opponent_rating.volatility <= 1:
+            raise SubmissionValidationError("invalid calibration opponent rating")
+        opponent_ratings.append(opponent_rating)
+    provisional = update_rating(GlickoRating(), list(zip(opponent_ratings, results, strict=True)))
     timings = [game["timing"] for game in games]
     artifact = {
         "schema": "swarmbench-calibration-v1",
@@ -245,7 +312,7 @@ def aggregate_calibration(parts: list[dict[str, Any]], *, submission_id: str, su
         "submission_id": submission_id,
         "submission_path": submission_path.replace("\\", "/"),
         "head_sha": head_sha,
-        "opponents": sorted(opponents),
+        "opponents": sorted(opponents or []),
         "match_count": len(games),
         "wins": sum(result == 1.0 for result in results),
         "draws": sum(result == 0.5 for result in results),
@@ -336,6 +403,7 @@ def main(argv: list[str] | None = None) -> int:
     calibration.add_argument("--submission-id", required=True)
     calibration.add_argument("--head-sha", required=True)
     calibration.add_argument("--seed-index", type=int, required=True)
+    calibration.add_argument("--ratings", type=Path, default=Path("leaderboard/ratings.json"))
     calibration.add_argument("--output", type=Path, required=True)
     aggregate = subparsers.add_parser("aggregate")
     aggregate.add_argument("directory", type=Path)
@@ -359,6 +427,7 @@ def main(argv: list[str] | None = None) -> int:
                 submission_id=args.submission_id,
                 head_sha=args.head_sha,
                 seed_index=args.seed_index,
+                ratings=load_ratings(args.ratings),
                 backend=os.environ.get("SWARMBENCH_BACKEND", "local"),
             )
             args.output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
