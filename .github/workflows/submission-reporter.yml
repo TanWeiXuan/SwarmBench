@@ -6,9 +6,9 @@ on:
     types: [requested, in_progress, completed]
 
 permissions:
-  contents: write
-  actions: write
-  pull-requests: write
+  contents: read
+  actions: read
+  pull-requests: read
 
 jobs:
   report:
@@ -44,6 +44,16 @@ jobs:
             if (files.some(file => file.filename.startsWith('submissions/'))) {
               core.setOutput('pr_number', prNumber);
             }
+      - name: Create short-lived submission token
+        id: app-token
+        if: ${{ steps.submission.outputs.pr_number }}
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.SWARMBENCH_APP_ID }}
+          private-key: ${{ secrets.SWARMBENCH_APP_PRIVATE_KEY }}
+          permission-actions: read
+          permission-contents: write
+          permission-pull-requests: write
       - name: Download final validated result
         if: ${{ steps.submission.outputs.pr_number && github.event.workflow_run.status == 'completed' && github.event.workflow_run.conclusion == 'success' }}
         uses: actions/download-artifact@v4
@@ -58,6 +68,7 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.submission.outputs.pr_number }}
         with:
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const run = context.payload.workflow_run;
             const prNumber = Number(process.env.PR_NUMBER);
@@ -114,12 +125,6 @@ jobs:
                     ...context.repo, pull_number: prNumber, sha: pull.head.sha, merge_method: 'squash'
                   });
                   if (!merge.merged) throw new Error(merge.message || 'merge was rejected');
-                  await github.rest.actions.createWorkflowDispatch({
-                    ...context.repo,
-                    workflow_id: 'submission-accepted.yml',
-                    ref: 'main',
-                    inputs: {pr_number: String(prNumber), head_sha: pull.head.sha}
-                  });
                   mergeNote = pull.draft ? '✅ Marked ready and merged' : '✅ Merged';
                 }
               } catch (error) {
