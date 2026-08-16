@@ -143,6 +143,20 @@
     {
       "author": "renj1ete0",
       "built_in": false,
+      "controller_id": "renj1ete0/claude_opus_5_max",
+      "deviation": 41.687985697508246,
+      "display_name": "Claude Opus 5 Max",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1988.0356445006341,
+      "version_sha": "4d5f67c15ef4ab11fcf5b51ece05d7a1ecf1f06b",
+      "volatility": 0.060003179548343194,
+      "wins": 0
+    },
+    {
+      "author": "renj1ete0",
+      "built_in": false,
       "controller_id": "renj1ete0/gemini_3_5_flash_high",
       "deviation": 45.96924282769294,
       "display_name": "Gemini 3 5 Flash High",
