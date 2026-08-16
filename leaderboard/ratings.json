@@ -3,6 +3,20 @@
     {
       "author": "TanWeiXuan",
       "built_in": false,
+      "controller_id": "TanWeiXuan/gpt_5_3_codex_spark_extra_high",
+      "deviation": 52.12522870250404,
+      "display_name": "Gpt 5 3 Codex Spark Extra High",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1254.706598975214,
+      "version_sha": "ada31b38ff492f3abe661fc61dcf2536961ee7c0",
+      "volatility": 0.05999838156319813,
+      "wins": 0
+    },
+    {
+      "author": "TanWeiXuan",
+      "built_in": false,
       "controller_id": "TanWeiXuan/luna_max",
       "deviation": 53.574014322803194,
       "display_name": "Luna Max",
