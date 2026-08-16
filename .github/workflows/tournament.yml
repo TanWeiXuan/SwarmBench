@@ -226,7 +226,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      actions: read
+      actions: write
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
@@ -261,6 +261,8 @@ jobs:
           git commit -m "chore: publish tournament $RUN_ID ratings"
           git push --set-upstream origin "bot/tournament-$RUN_ID"
           url=$(gh pr create --title "Publish tournament $RUN_ID ratings" --body "Atomic current-state update from the completed official rating period." --base main --head "bot/tournament-$RUN_ID")
+          gh workflow run tests.yml --ref "bot/tournament-$RUN_ID"
+          gh workflow run submission-validation.yml --ref "bot/tournament-$RUN_ID"
           gh pr merge "$url" --auto --squash
       - uses: actions/upload-artifact@v4
         with:

@@ -3,12 +3,13 @@ name: Submission Validation
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: submission-validation-${{ github.event.pull_request.number }}
+  group: submission-validation-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -30,8 +31,8 @@ jobs:
       - run: python -m pip install -e ".[competition]"
       - name: Validate changed files
         env:
-          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
-          BASE_REF: origin/${{ github.base_ref }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login || 'github-actions[bot]' }}
+          BASE_REF: ${{ github.event.pull_request.base.sha || 'origin/main' }}
         run: python -m swarmbench.competition.submission structure --base-ref "$BASE_REF" --author "$PR_AUTHOR" --output structure.json
       - id: path
         run: python -c "import json,os; p=json.load(open('structure.json', encoding='utf-8'))['submission_path']; out=open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8'); out.write('path='+(p or '')+'\n'); out.write('is_submission='+str(p is not None).lower()+'\n'); out.close()"
@@ -97,7 +98,7 @@ jobs:
       - run: docker build --tag swarmbench-controller --file Dockerfile.controller .
       - env:
           SUBMISSION_PATH: ${{ needs.structure.outputs.path }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           SEED_INDEX: ${{ matrix.seed_index }}
           SWARMBENCH_BACKEND: docker
         run: python -m swarmbench.competition.submission calibrate "$SUBMISSION_PATH" --submission-id "$SUBMISSION_PATH" --head-sha "$HEAD_SHA" --seed-index "$SEED_INDEX" --output "calibration-seed-$SEED_INDEX.json"
@@ -139,7 +140,7 @@ jobs:
           merge-multiple: true
       - env:
           SUBMISSION_PATH: ${{ needs.structure.outputs.path }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: python -m swarmbench.competition.submission aggregate calibration-parts --submission-id "$SUBMISSION_PATH" --submission-path "$SUBMISSION_PATH" --head-sha "$HEAD_SHA" --output calibration-result.json
         if: ${{ needs.structure.outputs.is_submission == 'true' }}
       - uses: actions/upload-artifact@v4
