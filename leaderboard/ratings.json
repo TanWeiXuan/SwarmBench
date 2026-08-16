@@ -1,6 +1,20 @@
 {
   "controllers": [
     {
+      "author": "TanWeiXuan",
+      "built_in": false,
+      "controller_id": "TanWeiXuan/sol_extra_high",
+      "deviation": 59.89856560810233,
+      "display_name": "Sol Extra High",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1901.9396713275946,
+      "version_sha": "097b69654d87a388e48aabea24088e68b4bde122",
+      "volatility": 0.06000115277457547,
+      "wins": 0
+    },
+    {
       "author": "SwarmBench",
       "built_in": true,
       "controller_id": "assignment",
