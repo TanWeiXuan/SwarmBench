@@ -103,6 +103,25 @@ def _star(center: tuple[int, int], radius: float) -> list[tuple[float, float]]:
     return points
 
 
+def _remaining_counts(frame: ReplayFrame, team: Team) -> tuple[int, int]:
+    return tuple(
+        sum(
+            drone.status is DroneStatus.ACTIVE and drone.team is team and drone.drone_type is drone_type
+            for drone in frame.drones
+        )
+        for drone_type in (DroneType.FAST, DroneType.SLOW)
+    )
+
+
+def _fit_text(draw: Any, value: str, max_width: int, font: Any) -> str:
+    if draw.textlength(value, font=font) <= max_width:
+        return value
+    suffix = "..."
+    while value and draw.textlength(value + suffix, font=font) > max_width:
+        value = value[:-1]
+    return value + suffix
+
+
 def _draw_frame(
     background: Any,
     replay: Replay,
@@ -136,12 +155,40 @@ def _draw_frame(
         radius = (4 + 8 * age / 0.25) * scale
         alpha = round(255 * max(0.1, 1 - age / 0.25))
         draw.polygon(_star(_point(event["position"], replay, size), radius), fill=(255, 143, 0, alpha))
-    banner_height = max(22, round(25 * scale))
+    banner_height = max(40, round(44 * scale))
     draw.rectangle((0, 0, width, banner_height), fill=(247, 247, 242, 225))
+    padding = max(6, round(8 * scale))
+    name_y = max(1, round(2 * scale))
+    details_y = max(18, round(21 * scale))
+    name_width = width // 2 - 2 * padding
+    controller_a = replay.controller_a.get("id", "unknown") or "unknown"
+    controller_b = replay.controller_b.get("id", "unknown") or "unknown"
+    left_name = _fit_text(draw, f"Blue A: {controller_a}", name_width, font)
+    right_name = _fit_text(draw, f"Red B: {controller_b}", name_width, font)
+    draw.text((padding, name_y), left_name, fill="#1769aa", font=font)
     draw.text(
-        (max(6, round(8 * scale)), max(3, round(4 * scale))),
-        f"SwarmBench  t={frame.time:05.2f}s   A {frame.scores[0]} - {frame.scores[1]} B",
+        (width - padding - round(draw.textlength(right_name, font=font)), name_y),
+        right_name,
+        fill="#c62828",
+        font=font,
+    )
+
+    fast_a, slow_a = _remaining_counts(frame, Team.A)
+    fast_b, slow_b = _remaining_counts(frame, Team.B)
+    left_counts = f"FAST {fast_a}  SLOW {slow_a}"
+    status = f"t={frame.time:05.2f}s   {frame.scores[0]} - {frame.scores[1]}"
+    right_counts = f"FAST {fast_b}  SLOW {slow_b}"
+    draw.text((padding, details_y), left_counts, fill="#1769aa", font=font)
+    draw.text(
+        ((width - draw.textlength(status, font=font)) / 2, details_y),
+        status,
         fill="#222222",
+        font=font,
+    )
+    draw.text(
+        (width - padding - round(draw.textlength(right_counts, font=font)), details_y),
+        right_counts,
+        fill="#c62828",
         font=font,
     )
     return image
