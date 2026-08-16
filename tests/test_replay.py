@@ -40,9 +40,23 @@ def test_reconstruction_is_deterministic(short_match) -> None:
     assert first == second
 
 
-def test_renderer_creates_image(short_match, tmp_path: Path) -> None:
+def test_renderer_creates_image(short_match, tmp_path: Path, capsys) -> None:
     output = render_replay(short_match.replay, tmp_path / "match.png")
     assert output is not None and output.stat().st_size > 1_000
+    messages = capsys.readouterr().out
+    assert "Reconstructing replay frames..." in messages
+    assert "Prepared" in messages
+    assert "Rendering final frame" in messages
+    assert "Finished rendering" in messages
+
+
+def test_animation_renderer_reports_progress(short_match, tmp_path: Path, capsys) -> None:
+    output = render_replay(short_match.replay, tmp_path / "match.gif", fps=10)
+    assert output is not None and output.stat().st_size > 1_000
+    messages = capsys.readouterr().out
+    assert "Encoding" in messages
+    assert "Rendering progress: 100%" in messages
+    assert "Finished rendering" in messages
 
 
 def test_explosion_effect_is_included_in_rendered_frame(short_match, tmp_path: Path) -> None:

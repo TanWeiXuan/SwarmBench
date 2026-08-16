@@ -67,14 +67,18 @@ def render_replay(replay: Replay, output: str | Path | None = None, *, fps: int 
     import matplotlib.pyplot as plt
     from matplotlib import animation
 
+    print("Reconstructing replay frames...", flush=True)
     frames = list(reconstruct_frames(replay))
+    print(f"Prepared {len(frames)} frames.", flush=True)
     figure, axis = plt.subplots(figsize=(10, 6), constrained_layout=True)
     trails: dict[int, list[tuple[float, float]]] = {}
     destination = Path(output) if output is not None else None
     if destination is not None and destination.suffix.lower() in {".png", ".jpg", ".jpeg"}:
+        print(f"Rendering final frame to {destination}...", flush=True)
         _draw_frame(axis, replay, frames[-1], trails)
         figure.savefig(destination, dpi=140)
         plt.close(figure)
+        print(f"Finished rendering {destination}.", flush=True)
         return destination
 
     def update(index: int):
@@ -83,16 +87,32 @@ def render_replay(replay: Replay, output: str | Path | None = None, *, fps: int 
 
     movie = animation.FuncAnimation(figure, update, frames=len(frames), interval=1000 / fps, blit=False)
     if destination is None:
+        print("Opening interactive renderer...", flush=True)
         plt.show()
         return None
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.suffix.lower() == ".mp4" and animation.writers.is_available("ffmpeg"):
-        movie.save(destination, writer=animation.FFMpegWriter(fps=fps, bitrate=1800))
+        writer = animation.FFMpegWriter(fps=fps, bitrate=1800)
     else:
         if destination.suffix.lower() != ".gif":
             destination = destination.with_suffix(".gif")
-        movie.save(destination, writer=animation.PillowWriter(fps=fps))
+        writer = animation.PillowWriter(fps=fps)
+
+    print(f"Encoding {len(frames)} frames to {destination}...", flush=True)
+    last_reported = -1
+
+    def report_progress(current_frame: int, total_frames: int) -> None:
+        nonlocal last_reported
+        total = total_frames or len(frames)
+        percent = min(100, (current_frame + 1) * 100 // total)
+        milestone = percent // 10 * 10
+        if milestone > last_reported:
+            last_reported = milestone
+            print(f"Rendering progress: {milestone}%", flush=True)
+
+    movie.save(destination, writer=writer, progress_callback=report_progress)
     plt.close(figure)
+    print(f"Finished rendering {destination}.", flush=True)
     return destination
 
 

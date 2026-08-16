@@ -61,6 +61,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"rendered {actual}")
         return 0
     if args.command == "render":
+        print(f"Loading replay from {args.replay}...", flush=True)
         actual = render_replay(load_replay(args.replay), args.output)
         print(f"rendered {actual}")
         return 0
