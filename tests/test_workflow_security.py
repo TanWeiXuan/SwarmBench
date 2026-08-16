@@ -19,10 +19,14 @@ def test_untrusted_submission_workflow_is_read_only() -> None:
 
 def test_privileged_reporter_never_checks_out_or_runs_controller_code() -> None:
     text = workflow("submission-reporter.yml")
+    assert "pull_request_target:" in text
+    assert "types: [ready_for_review]" in text
+    assert "contents: write" in text
     assert "pull-requests: write" in text
     assert "actions/checkout" not in text
     assert "python" not in text.lower()
     assert "submission.py" not in text
+    assert "if (pull.draft)" in text
 
 
 def test_acceptance_workflow_checks_out_only_merged_main() -> None:
