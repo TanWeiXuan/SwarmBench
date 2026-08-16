@@ -1,13 +1,16 @@
-from pathlib import Path
+import io
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
 from swarmbench.api import Team
 from swarmbench.controllers.baselines import baseline_path
+from swarmbench.engine import generate_scenario
 from swarmbench.match import run_match
 from swarmbench.replay import ReplayValidationError, load_replay, reconstruct_frames, save_replay, validate_replay, verify_reconstruction
-from swarmbench.replay.renderer import explosion_events_at, render_replay
+from swarmbench.replay import renderer
+from swarmbench.replay.renderer import explosion_events_at, render_arena, render_replay
 
 
 @pytest.fixture(scope="module")
@@ -54,24 +57,99 @@ def test_renderer_creates_image(short_match, tmp_path: Path, capsys) -> None:
     assert "Finished rendering" in messages
 
 
+def test_renderer_creates_high_quality_jpeg(short_match, tmp_path: Path) -> None:
+    from PIL import Image
+
+    output = render_replay(short_match.replay, tmp_path / "match.jpg", quality="high")
+    with Image.open(output) as image:
+        assert image.size == (1400, 840)
+        assert image.format == "JPEG"
+
+
 def test_animation_renderer_reports_progress(short_match, tmp_path: Path, capsys) -> None:
+    from PIL import Image
+
     output = render_replay(short_match.replay, tmp_path / "match.gif")
-    assert output is not None and output.stat().st_size > 1_000
+    assert output.stat().st_size > 1_000
+    with Image.open(output) as image:
+        assert image.size == (640, 384)
+        assert image.n_frames == 11
     messages = capsys.readouterr().out
     assert "Encoding" in messages
     assert "Rendering progress: 100%" in messages
     assert "Finished rendering" in messages
 
 
+def test_mp4_falls_back_to_gif_without_ffmpeg(short_match, tmp_path: Path, monkeypatch, capsys) -> None:
+    monkeypatch.setattr(renderer.shutil, "which", lambda _name: None)
+
+    output = render_replay(short_match.replay, tmp_path / "match.mp4")
+
+    assert output == tmp_path / "match.gif"
+    assert output.stat().st_size > 1_000
+    assert "FFmpeg is unavailable; rendering GIF instead." in capsys.readouterr().out
+
+
+def test_ffmpeg_failure_removes_partial_output(short_match, tmp_path: Path, monkeypatch) -> None:
+    class FailedProcess:
+        def __init__(self) -> None:
+            self.stdin = io.BytesIO()
+            self.stderr = io.BytesIO(b"encoder failed")
+            self.return_code = None
+
+        def kill(self) -> None:
+            self.return_code = -9
+
+        def poll(self):
+            return self.return_code
+
+        def wait(self) -> int:
+            self.return_code = 1
+            return 1
+
+    monkeypatch.setattr(renderer.shutil, "which", lambda _name: "ffmpeg")
+    monkeypatch.setattr(renderer.subprocess, "Popen", lambda *_args, **_kwargs: FailedProcess())
+    output = tmp_path / "failed.mp4"
+
+    with pytest.raises(RuntimeError, match="FFmpeg failed: encoder failed"):
+        render_replay(short_match.replay, output)
+    assert not output.exists()
+
+
 def test_explosion_effect_is_included_in_rendered_frame(short_match, tmp_path: Path) -> None:
+    from PIL import Image
+
     replay = deepcopy(short_match.replay)
     replay.events.append(
         {"time": 0.9, "type": "INTERCEPTION", "drone_ids": [0, 20], "position": [50.0, 30.0], "team": None, "points": 0}
     )
     assert explosion_events_at(replay, 1.0)
     output = render_replay(replay, tmp_path / "explosion.png")
-    assert output is not None and output.stat().st_size > 1_000
+    assert output.stat().st_size > 1_000
+    with Image.open(output).convert("RGB") as image:
+        assert any(red > 245 and 130 < green < 210 and blue < 130 for red, green, blue in image.getdata())
     assert not explosion_events_at(replay, 1.3)
+
+
+def test_renderer_retains_recent_trails(short_match) -> None:
+    trails = {}
+    for frame in reconstruct_frames(short_match.replay, every_ticks=2):
+        renderer._update_trails(frame, short_match.replay, (640, 384), trails)
+    assert any(len(points) > 1 for points in trails.values())
+    assert all(len(points) <= 20 for points in trails.values())
+
+
+def test_arena_renderer_creates_image(tmp_path: Path) -> None:
+    from PIL import Image
+
+    output = render_arena(generate_scenario(42), tmp_path / "arena.png")
+    with Image.open(output) as image:
+        assert image.size == (640, 384)
+
+
+def test_renderer_requires_output_path(short_match) -> None:
+    with pytest.raises(ValueError, match="output path is required"):
+        render_replay(short_match.replay, None)  # type: ignore[arg-type]
 
 
 def test_match_metadata_and_result_are_complete(short_match) -> None:
