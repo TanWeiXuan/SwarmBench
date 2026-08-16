@@ -45,6 +45,20 @@
     {
       "author": "TanWeiXuan",
       "built_in": false,
+      "controller_id": "TanWeiXuan/gpt_5_6_sol_extra_high_aegis_weave",
+      "deviation": 41.19549665748977,
+      "display_name": "Gpt 5 6 Sol Extra High Aegis Weave",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1974.7977504526648,
+      "version_sha": "de53f1271736262390310bbff4c8eda61a584391",
+      "volatility": 0.06000283293321722,
+      "wins": 0
+    },
+    {
+      "author": "TanWeiXuan",
+      "built_in": false,
       "controller_id": "TanWeiXuan/gpt_5_6_terra_spark_ultra",
       "deviation": 29.2403997329974,
       "display_name": "Gpt 5 6 Terra Spark Ultra",
