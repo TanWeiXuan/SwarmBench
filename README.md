@@ -50,10 +50,34 @@ The object persists for one match, so assignments, caches, recurrent state, and 
 
 ## Generate a controller with a coding agent
 
-Contributors who want a coding agent to implement a controller can use the prompt below. Replace `<OUTPUT_PATH>` with `submissions/<github-login>/<controller-name>.py` before running it.
+Contributors who want a coding agent to implement a controller can use the prompt
+below. Replace `<OUTPUT_PATH>` with
+`submissions/<github-login>/<controller-name>.py` before running it. Identify the
+coding agent or model you used either in the controller's name or in a comment
+near the top of the submission file.
 
 ```text
-You are competing in SwarmBench. Inspect the repository to understand the game rules, controller API, physics, scoring, obstacles, execution limits, validation tools, and built-in baseline controllers, then implement the strongest valid and robust swarm controller you can as a single Python submission file at `<OUTPUT_PATH>`. You may run validation tools, play test matches against available controllers, inspect results, and iteratively improve your strategy, but do not modify any other repository files and do not exploit bugs or violate documented limits. Design your strategy primarily from the game mechanics and your own reasoning rather than copying or closely adapting other submitted/community controllers; you may inspect other controllers when useful for understanding the API or evaluating ideas, but if you incorporate any non-trivial strategy, algorithm, structure, constants, or code derived from another controller, clearly identify what was borrowed and its source in comments within your submission. Optimize for strong general performance against unseen opponents and hidden deterministic arena seeds rather than overfitting to known controllers, seeds, or test cases.
+You are competing in SwarmBench. Inspect the repository to understand the game
+rules, controller API, physics, scoring, obstacles, execution limits, validation
+tools, and built-in baseline controllers. Then implement the strongest valid and
+robust swarm controller you can as a single Python submission file at
+`<OUTPUT_PATH>`.
+
+You may run validation tools, play test matches against available controllers,
+inspect results, and iteratively improve your strategy, but do not modify any
+other repository files and do not exploit bugs or violate documented limits.
+
+Design your strategy primarily from the game mechanics and your own reasoning
+rather than copying or closely adapting other submitted/community controllers.
+You may inspect other controllers when useful for understanding the API or
+evaluating ideas, but if you incorporate any non-trivial strategy, algorithm,
+structure, constants, or code derived from another controller, clearly identify
+what was borrowed and its source in comments within your submission.
+
+Optimize for strong general performance against unseen opponents and hidden
+deterministic arena seeds rather than overfitting to known controllers, seeds,
+or test cases. Ensure the coding agent or model used is identifiable either from
+the controller's name or from a comment near the top of the submission file.
 ```
 
 ## Submit a controller
