@@ -91,16 +91,16 @@ Only the latest rating state is committed; permanent tournament history lives in
 <!-- LEADERBOARD_START -->
 | Rank | Controller | Author | Rating | RD | W | D | L | Games |
 | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | Claude Sonnet 5 Max | renj1ete0 | 2085 | 34 | 49 | 15 | 0 | 64 |
-| 2 | Gpt 5 6 Terra Spark Ultra | TanWeiXuan | 2072 | 32 | 165 | 12 | 15 | 192 |
-| 3 | Claude Opus 5 Max | renj1ete0 | 2059 | 34 | 48 | 15 | 1 | 64 |
-| 4 | Gpt 5 6 Sol Ultra | TanWeiXuan | 1986 | 41 | 0 | 0 | 0 | 0 |
-| 5 | Gemini 3 5 Flash High | renj1ete0 | 1951 | 36 | 39 | 7 | 18 | 64 |
-| 6 | Luna Max | TanWeiXuan | 1893 | 31 | 133 | 6 | 53 | 192 |
-| 7 | Sol Extra High | TanWeiXuan | 1811 | 31 | 114 | 11 | 67 | 192 |
-| 8 | Gpt 5 3 Codex Spark Extra High | TanWeiXuan | 1340 | 29 | 54 | 18 | 120 | 192 |
-| 9 | Gpt 5 6 Luna Light | TanWeiXuan | 1308 | 33 | 20 | 9 | 35 | 64 |
-| 10 | Luna Medium | TanWeiXuan | 1269 | 29 | 35 | 22 | 135 | 192 |
+| 1 | Claude Sonnet 5 Max | renj1ete0 | 2092 | 35 | 53 | 15 | 0 | 68 |
+| 2 | Gpt 5 6 Terra Spark Ultra | TanWeiXuan | 2065 | 33 | 166 | 12 | 18 | 196 |
+| 3 | Claude Opus 5 Max | renj1ete0 | 2062 | 35 | 50 | 16 | 2 | 68 |
+| 4 | Gpt 5 6 Sol Ultra | TanWeiXuan | 1992 | 42 | 2 | 1 | 1 | 4 |
+| 5 | Gemini 3 5 Flash High | renj1ete0 | 1947 | 36 | 40 | 8 | 20 | 68 |
+| 6 | Luna Max | TanWeiXuan | 1887 | 32 | 133 | 8 | 55 | 196 |
+| 7 | Sol Extra High | TanWeiXuan | 1817 | 32 | 117 | 12 | 67 | 196 |
+| 8 | Gpt 5 3 Codex Spark Extra High | TanWeiXuan | 1340 | 30 | 56 | 18 | 122 | 196 |
+| 9 | Gpt 5 6 Luna Light | TanWeiXuan | 1304 | 34 | 21 | 10 | 37 | 68 |
+| 10 | Luna Medium | TanWeiXuan | 1277 | 30 | 38 | 23 | 135 | 196 |
 <!-- LEADERBOARD_END -->
 
 ## Reproducibility and security
