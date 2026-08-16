@@ -26,10 +26,14 @@ def build_parser() -> argparse.ArgumentParser:
     match.add_argument("--duration", type=float, default=90.0)
     match.add_argument("--replay", type=Path)
     match.add_argument("--render", type=Path)
+    match.add_argument("--render-fps", type=int, choices=(5, 10, 20), default=10)
+    match.add_argument("--render-quality", choices=("low", "high"), default="low")
 
     render = subparsers.add_parser("render", help="render an existing replay")
     render.add_argument("replay", type=Path)
     render.add_argument("--output", type=Path, required=True)
+    render.add_argument("--render-fps", type=int, choices=(5, 10, 20), default=10)
+    render.add_argument("--render-quality", choices=("low", "high"), default="low")
 
     arena = subparsers.add_parser("arena", help="generate and optionally render an arena")
     arena.add_argument("--seed", type=int, required=True)
@@ -57,12 +61,12 @@ def main(argv: list[str] | None = None) -> int:
         if args.replay:
             save_replay(result.replay, args.replay)
         if args.render:
-            actual = render_replay(result.replay, args.render)
+            actual = render_replay(result.replay, args.render, fps=args.render_fps, quality=args.render_quality)
             print(f"rendered {actual}")
         return 0
     if args.command == "render":
         print(f"Loading replay from {args.replay}...", flush=True)
-        actual = render_replay(load_replay(args.replay), args.output)
+        actual = render_replay(load_replay(args.replay), args.output, fps=args.render_fps, quality=args.render_quality)
         print(f"rendered {actual}")
         return 0
     if args.command == "arena":

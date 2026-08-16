@@ -15,10 +15,40 @@ def test_benchmark_cli(capsys) -> None:
 def test_render_cli_announces_replay_loading(monkeypatch, capsys, tmp_path) -> None:
     replay = object()
     output = tmp_path / "match.png"
+    options = {}
     monkeypatch.setattr(cli, "load_replay", lambda _path: replay)
-    monkeypatch.setattr(cli, "render_replay", lambda value, destination: destination)
+
+    def render(value, destination, **kwargs):
+        options.update(kwargs)
+        return destination
+
+    monkeypatch.setattr(cli, "render_replay", render)
 
     assert main(["render", "match.json", "--output", str(output)]) == 0
+    assert options == {"fps": 10, "quality": "low"}
     messages = capsys.readouterr().out
     assert "Loading replay from match.json..." in messages
     assert f"rendered {output}" in messages
+
+
+def test_render_cli_accepts_quality_overrides(monkeypatch, tmp_path) -> None:
+    options = {}
+    monkeypatch.setattr(cli, "load_replay", lambda _path: object())
+    monkeypatch.setattr(cli, "render_replay", lambda _replay, destination, **kwargs: options.update(kwargs) or destination)
+
+    assert (
+        main(
+            [
+                "render",
+                "match.json",
+                "--output",
+                str(tmp_path / "match.mp4"),
+                "--render-fps",
+                "20",
+                "--render-quality",
+                "high",
+            ]
+        )
+        == 0
+    )
+    assert options == {"fps": 20, "quality": "high"}

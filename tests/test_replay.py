@@ -41,17 +41,21 @@ def test_reconstruction_is_deterministic(short_match) -> None:
 
 
 def test_renderer_creates_image(short_match, tmp_path: Path, capsys) -> None:
+    from PIL import Image
+
     output = render_replay(short_match.replay, tmp_path / "match.png")
     assert output is not None and output.stat().st_size > 1_000
+    with Image.open(output) as image:
+        assert image.size == (640, 384)
     messages = capsys.readouterr().out
     assert "Reconstructing replay frames..." in messages
-    assert "Prepared" in messages
+    assert "Prepared 11 frames at 10 FPS (low quality)." in messages
     assert "Rendering final frame" in messages
     assert "Finished rendering" in messages
 
 
 def test_animation_renderer_reports_progress(short_match, tmp_path: Path, capsys) -> None:
-    output = render_replay(short_match.replay, tmp_path / "match.gif", fps=10)
+    output = render_replay(short_match.replay, tmp_path / "match.gif")
     assert output is not None and output.stat().st_size > 1_000
     messages = capsys.readouterr().out
     assert "Encoding" in messages
