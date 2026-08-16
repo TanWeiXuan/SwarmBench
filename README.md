@@ -61,7 +61,8 @@ Only the latest rating state is committed; permanent tournament history lives in
 | 2 | Luna Max | TanWeiXuan | 1919 | 36 | 101 | 3 | 24 | 128 |
 | 3 | Sol Extra High | TanWeiXuan | 1856 | 37 | 90 | 8 | 30 | 128 |
 | 4 | Gpt 5 3 Codex Spark Extra High | TanWeiXuan | 1327 | 33 | 31 | 13 | 84 | 128 |
-| 5 | Luna Medium | TanWeiXuan | 1276 | 34 | 20 | 14 | 94 | 128 |
+| 5 | Gpt 5 6 Luna Light | TanWeiXuan | 1306 | 46 | 0 | 0 | 0 | 0 |
+| 6 | Luna Medium | TanWeiXuan | 1276 | 34 | 20 | 14 | 94 | 128 |
 <!-- LEADERBOARD_END -->
 
 ## Reproducibility and security
