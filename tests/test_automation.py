@@ -92,6 +92,25 @@ def test_progress_summary_validates_each_completed_batch() -> None:
         f"Current batch: {current_count} games — 0 side-A wins, {current_count} draws, "
         "0 side-B wins; aggregate score 0–0"
     ) in summary
+    assert "#### Current batch matchups" in summary
+    assert "| Matchup | Games | Left W-D-L | Score (left–right) |" in summary
+
+
+def test_matchup_progress_table_is_side_neutral_and_compact() -> None:
+    games = [
+        {"controller_a": "z", "controller_b": "a", "result_a": 1.0, "score_a": 3, "score_b": 1},
+        {"controller_a": "a", "controller_b": "z", "result_a": 0.5, "score_a": 2, "score_b": 2},
+    ]
+    games.extend(
+        {"controller_a": f"left-{index}", "controller_b": f"right-{index}", "result_a": 1.0, "score_a": 1, "score_b": 0}
+        for index in range(10)
+    )
+
+    lines = automation._matchup_progress_lines(games)
+
+    assert "| `a` vs `z` | 2 | 0-1-1 | 3–5 |" in lines
+    assert sum(line.startswith("| `") for line in lines) == 10
+    assert lines[-1] == "_Showing 10 of 11 matchups in this batch; complete pairing details follow in the final report._"
 
 
 def test_live_report_owns_discussion_until_final_artifact(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
