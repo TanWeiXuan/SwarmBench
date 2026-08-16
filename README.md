@@ -58,6 +58,7 @@ Only the latest rating state is committed; permanent tournament history lives in
 | Rank | Controller | Author | Rating | RD | W | D | L | Games |
 | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
 | 1 | Sol Extra High | TanWeiXuan | 1902 | 60 | 0 | 0 | 0 | 0 |
+| 2 | Luna Medium | TanWeiXuan | 1306 | 58 | 0 | 0 | 0 | 0 |
 <!-- LEADERBOARD_END -->
 
 ## Reproducibility and security
