@@ -3,6 +3,20 @@
     {
       "author": "TanWeiXuan",
       "built_in": false,
+      "controller_id": "TanWeiXuan/luna_max",
+      "deviation": 53.574014322803194,
+      "display_name": "Luna Max",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1923.0137673251352,
+      "version_sha": "02d7649d2c2b822f657ab370f92958776e710965",
+      "volatility": 0.060001604526595274,
+      "wins": 0
+    },
+    {
+      "author": "TanWeiXuan",
+      "built_in": false,
       "controller_id": "TanWeiXuan/luna_medium",
       "deviation": 57.698530450669814,
       "display_name": "Luna Medium",
