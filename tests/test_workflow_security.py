@@ -31,6 +31,16 @@ def test_privileged_reporter_never_checks_out_or_runs_controller_code() -> None:
     assert "submission-accepted.yml" in text
 
 
+def test_privileged_reporter_resolves_fork_pull_requests_by_validated_sha() -> None:
+    text = workflow("submission-reporter.yml")
+    job_header = text.split("  report:", 1)[1].split("    steps:", 1)[0]
+    assert "workflow_run.pull_requests" not in job_header
+    assert "listPullRequestsAssociatedWithCommit" in text
+    assert "candidate.state === 'open'" in text
+    assert "candidate.base.ref === context.payload.repository.default_branch" in text
+    assert "candidate.head.sha === run.head_sha" in text
+
+
 def test_acceptance_workflow_checks_out_only_merged_main() -> None:
     text = workflow("submission-accepted.yml")
     assert "pull_request_target" in text
