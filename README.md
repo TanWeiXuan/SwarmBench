@@ -63,6 +63,7 @@ Only the latest rating state is committed; permanent tournament history lives in
 | 4 | Gpt 5 3 Codex Spark Extra High | TanWeiXuan | 1327 | 33 | 31 | 13 | 84 | 128 |
 | 5 | Gpt 5 6 Luna Light | TanWeiXuan | 1306 | 46 | 0 | 0 | 0 | 0 |
 | 6 | Luna Medium | TanWeiXuan | 1276 | 34 | 20 | 14 | 94 | 128 |
+| 7 | Mai Code 1 1 Flash High | renj1ete0 | 1214 | 44 | 0 | 0 | 0 | 0 |
 <!-- LEADERBOARD_END -->
 
 ## Reproducibility and security
