@@ -1,10 +1,11 @@
 import io
 from copy import deepcopy
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
-from swarmbench.api import Team
+from swarmbench.api import DroneStatus, DroneType, Team
 from swarmbench.controllers.baselines import baseline_path
 from swarmbench.engine import generate_scenario
 from swarmbench.match import run_match
@@ -64,6 +65,49 @@ def test_renderer_creates_high_quality_jpeg(short_match, tmp_path: Path) -> None
     with Image.open(output) as image:
         assert image.size == (1400, 840)
         assert image.format == "JPEG"
+
+
+def test_renderer_header_uses_controller_names(short_match, tmp_path: Path, monkeypatch) -> None:
+    fitted_values = []
+    fit_text = renderer._fit_text
+
+    def record_fitted_value(draw, value, max_width, font):
+        fitted_values.append(value)
+        return fit_text(draw, value, max_width, font)
+
+    monkeypatch.setattr(renderer, "_fit_text", record_fitted_value)
+    render_replay(short_match.replay, tmp_path / "match.png")
+
+    assert fitted_values == ["Blue A: rush", "Red B: defend"]
+
+
+def test_renderer_header_counts_only_active_drones(short_match) -> None:
+    frame = next(reconstruct_frames(short_match.replay))
+    assert renderer._remaining_counts(frame, Team.A) == (10, 10)
+    assert renderer._remaining_counts(frame, Team.B) == (10, 10)
+
+    removed = next(
+        drone for drone in frame.drones if drone.team is Team.A and drone.drone_type is DroneType.FAST
+    )
+    changed = replace(
+        frame,
+        drones=tuple(
+            replace(drone, status=DroneStatus.ELIMINATED) if drone.id == removed.id else drone
+            for drone in frame.drones
+        ),
+    )
+    assert renderer._remaining_counts(changed, Team.A) == (9, 10)
+
+
+def test_renderer_truncates_long_controller_names() -> None:
+    from PIL import Image, ImageDraw, ImageFont
+
+    draw = ImageDraw.Draw(Image.new("RGB", (640, 384)))
+    font = ImageFont.load_default(size=14)
+    fitted = renderer._fit_text(draw, "Blue A: controller-name-that-is-far-too-long", 120, font)
+
+    assert fitted.endswith("...")
+    assert draw.textlength(fitted, font=font) <= 120
 
 
 def test_animation_renderer_reports_progress(short_match, tmp_path: Path, capsys) -> None:
