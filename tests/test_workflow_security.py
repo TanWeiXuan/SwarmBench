@@ -35,13 +35,11 @@ def test_acceptance_workflow_checks_out_only_merged_main() -> None:
     text = workflow("submission-accepted.yml")
     assert "pull_request_target" in text
     assert "workflow_dispatch:" in text
-    assert "actions: write" in text
+    assert "actions: read" in text
     assert "ref: main" in text
     assert "ref: ${{ github.event.pull_request.head" not in text
     assert "competition.publisher" in text
     assert 'pip install -e ".[competition]"' in text
-    assert "gh workflow run tests.yml" in text
-    assert "gh workflow run submission-validation.yml" in text
 
 
 def test_controller_dockerfile_drops_root() -> None:
@@ -56,13 +54,16 @@ def test_tournament_jobs_install_automation_dependencies() -> None:
     assert all('".[competition]"' in line for line in installs)
 
 
-def test_tournament_publisher_dispatches_required_bot_pr_checks() -> None:
-    tournament = workflow("tournament.yml")
-    assert "actions: write" in tournament.split("  final:", 1)[1]
-    assert "gh workflow run tests.yml" in tournament
-    assert "gh workflow run submission-validation.yml" in tournament
-    assert "workflow_dispatch:" in workflow("tests.yml")
-    assert "workflow_dispatch:" in workflow("submission-validation.yml")
+def test_bot_publishers_use_github_app_token() -> None:
+    for name in ("submission-accepted.yml", "tournament.yml"):
+        text = workflow(name)
+        assert "actions/create-github-app-token@v3" in text
+        assert "app-id: ${{ vars.SWARMBENCH_APP_ID }}" in text
+        assert "private-key: ${{ secrets.SWARMBENCH_APP_PRIVATE_KEY }}" in text
+        assert "token: ${{ steps.app-token.outputs.token }}" in text
+        assert "GH_TOKEN: ${{ steps.app-token.outputs.token }}" in text
+        assert "gh workflow run tests.yml" not in text
+        assert "gh workflow run submission-validation.yml" not in text
 
 
 def test_submission_jobs_install_validation_dependencies() -> None:
@@ -91,7 +92,8 @@ def test_tournament_compute_and_report_permissions_are_separated() -> None:
     assert "automation compute" not in reporter
 
     final = text.split("  final:", 1)[1]
-    assert "contents: write" in final
+    assert "contents: read" in final
+    assert "actions: read" in final
     assert "discussions: write" not in final
     assert "automation final" in final
     assert "automation compute" not in final

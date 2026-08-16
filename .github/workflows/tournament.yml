@@ -225,14 +225,22 @@ jobs:
     needs: compute-4
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      actions: write
-      pull-requests: write
+      contents: read
+      actions: read
     steps:
+      - name: Create short-lived publication token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.SWARMBENCH_APP_ID }}
+          private-key: ${{ secrets.SWARMBENCH_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
       - uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -251,7 +259,7 @@ jobs:
       - name: Open rating publication PR for official runs
         if: ${{ github.event_name == 'schedule' || inputs.mode == 'official' }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           RUN_ID: ${{ github.run_id }}
         run: |
           git config user.name swarmbench-bot
@@ -261,8 +269,6 @@ jobs:
           git commit -m "chore: publish tournament $RUN_ID ratings"
           git push --set-upstream origin "bot/tournament-$RUN_ID"
           url=$(gh pr create --title "Publish tournament $RUN_ID ratings" --body "Atomic current-state update from the completed official rating period." --base main --head "bot/tournament-$RUN_ID")
-          gh workflow run tests.yml --ref "bot/tournament-$RUN_ID"
-          gh workflow run submission-validation.yml --ref "bot/tournament-$RUN_ID"
           gh pr merge "$url" --auto --squash
       - uses: actions/upload-artifact@v4
         with:
