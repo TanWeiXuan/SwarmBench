@@ -157,6 +157,20 @@
     {
       "author": "renj1ete0",
       "built_in": false,
+      "controller_id": "renj1ete0/claude_sonnet_5_max",
+      "deviation": 41.82633184451392,
+      "display_name": "Claude Sonnet 5 Max",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 2017.7671294824777,
+      "version_sha": "44f6d183d0202c5615b8aacf5f76fb41b38a78d3",
+      "volatility": 0.060003990522373096,
+      "wins": 0
+    },
+    {
+      "author": "renj1ete0",
+      "built_in": false,
       "controller_id": "renj1ete0/gemini_3_5_flash_high",
       "deviation": 45.96924282769294,
       "display_name": "Gemini 3 5 Flash High",
