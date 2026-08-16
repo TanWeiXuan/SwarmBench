@@ -93,16 +93,16 @@ Only the latest rating state is committed; permanent tournament history lives in
 <!-- LEADERBOARD_START -->
 | Rank | Controller | Author | Rating | RD | W | D | L | Games |
 | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | Claude Sonnet 5 Max | renj1ete0 | 2096 | 30 | 93 | 32 | 7 | 132 |
-| 2 | Gpt 5 6 Sol Ultra | TanWeiXuan | 2091 | 33 | 55 | 7 | 6 | 68 |
-| 3 | Claude Opus 5 Max | renj1ete0 | 2085 | 30 | 92 | 32 | 8 | 132 |
-| 4 | Gpt 5 6 Terra Spark Ultra | TanWeiXuan | 2051 | 29 | 204 | 22 | 34 | 260 |
-| 5 | Claude Opus 5 Apex | renj1ete0 | 1999 | 41 | 0 | 0 | 0 | 0 |
-| 6 | Qwen 3 6 35B A3B | renj1ete0 | 1981 | 42 | 0 | 0 | 0 | 0 |
-| 7 | Gpt 5 6 Sol Extra High Aegis Weave | TanWeiXuan | 1975 | 41 | 0 | 0 | 0 | 0 |
-| 8 | Qwen 3 6 35B A3B V2 | renj1ete0 | 1965 | 41 | 0 | 0 | 0 | 0 |
-| 9 | Gemini 3 5 Flash High | renj1ete0 | 1935 | 30 | 71 | 15 | 46 | 132 |
-| 10 | Luna Max | TanWeiXuan | 1852 | 28 | 155 | 14 | 91 | 260 |
+| 1 | Gpt 5 6 Sol Ultra | TanWeiXuan | 2098 | 34 | 57 | 9 | 6 | 72 |
+| 2 | Claude Sonnet 5 Max | renj1ete0 | 2089 | 32 | 93 | 34 | 9 | 136 |
+| 3 | Claude Opus 5 Max | renj1ete0 | 2082 | 31 | 92 | 35 | 9 | 136 |
+| 4 | Gpt 5 6 Terra Spark Ultra | TanWeiXuan | 2055 | 31 | 205 | 25 | 34 | 264 |
+| 5 | Claude Opus 5 Apex | renj1ete0 | 1999 | 42 | 2 | 2 | 0 | 4 |
+| 6 | Qwen 3 6 35B A3B | renj1ete0 | 1976 | 42 | 0 | 3 | 1 | 4 |
+| 7 | Gpt 5 6 Sol Extra High Aegis Weave | TanWeiXuan | 1975 | 41 | 1 | 2 | 1 | 4 |
+| 8 | Qwen 3 6 35B A3B V2 | renj1ete0 | 1972 | 42 | 3 | 1 | 0 | 4 |
+| 9 | Gemini 3 5 Flash High | renj1ete0 | 1934 | 32 | 73 | 16 | 47 | 136 |
+| 10 | Luna Max | TanWeiXuan | 1860 | 30 | 158 | 15 | 91 | 264 |
 <!-- LEADERBOARD_END -->
 
 ## Reproducibility and security
