@@ -140,7 +140,7 @@ def _discussion_category(owner: str, name: str) -> tuple[str, str]:
 def initial_discussion_body(data: dict[str, Any]) -> str:
     return "\n".join(
         (
-            "## Status: RUNNING",
+            "## Initial status: RUNNING",
             "",
             f"- Tournament ID: `{data['tournament_id']}`",
             f"- Mode: **{data['mode']}**",
@@ -152,7 +152,7 @@ def initial_discussion_body(data: dict[str, Any]) -> str:
             f"- Planned games: {len(data['games'])}",
             f"- Started: {data['started_at']}",
             "",
-            "Provisional progress will be posted at approximately 20% increments. Ratings change only after every batch validates.",
+            "The latest bot reply is authoritative for current status. Provisional progress will be posted at approximately 20% increments. Ratings change only after every batch validates.",
         )
     )
 
@@ -176,11 +176,6 @@ def create_discussion(data: dict[str, Any], repository: str) -> dict[str, str]:
 
 def _add_comment(discussion_id: str, body: str) -> None:
     mutation = "mutation($discussionId:ID!,$body:String!){addDiscussionComment(input:{discussionId:$discussionId,body:$body}){comment{id}}}"
-    _gh_graphql(mutation, discussionId=discussion_id, body=body)
-
-
-def _update_discussion(discussion_id: str, body: str) -> None:
-    mutation = "mutation($discussionId:ID!,$body:String!){updateDiscussion(input:{discussionId:$discussionId,body:$body}){discussion{id}}}"
     _gh_graphql(mutation, discussionId=discussion_id, body=body)
 
 
@@ -221,9 +216,7 @@ def _download_artifact(repository: str, run_id: str, name: str, destination: Pat
 
 
 def _mark_failed(data: dict[str, Any], discussion_id: str, stage: str) -> None:
-    body = initial_discussion_body(data).replace("## Status: RUNNING", "## Status: FAILED")
-    comment = f"### Tournament failed\n\nThe workflow stopped during `{stage}`. Official ratings were not partially updated."
-    _update_discussion(discussion_id, body)
+    comment = f"## Status: FAILED\n\nThe workflow stopped during `{stage}`. Official ratings were not partially updated."
     _add_comment(discussion_id, comment)
 
 
@@ -261,7 +254,6 @@ def live_report(
             wait_for(artifact, f"Compute batch {index + 1} (untrusted controllers)")
             _download_artifact(repository, run_id, artifact, work / artifact)
             summary = progress_summary(data, _load_batches(work), index)
-            _update_discussion(discussion["id"], initial_discussion_body(data) + "\n\n" + summary)
             _add_comment(discussion["id"], summary)
 
         wait_for("tournament-results", "Validate all batches and publish atomically")
@@ -276,7 +268,6 @@ def live_report(
         ):
             raise ValueError("invalid tournament result artifact")
         body = result["discussion_body"]
-        _update_discussion(discussion["id"], body)
         _add_comment(discussion["id"], "### Final result\n\n" + body)
     except Exception as error:
         try:
