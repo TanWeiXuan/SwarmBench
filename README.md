@@ -21,6 +21,8 @@ python -m swarmbench match --controller-a rush --controller-b assignment --seed 
 python -m swarmbench render match.json --output match.gif
 ```
 
+Rendering defaults to 10 FPS at low quality (640×384). Use `--render-fps 20 --render-quality high` when fidelity matters more than rendering speed.
+
 Baseline names are `rush`, `defend`, `greedy_value`, `assignment`, and `potential_field`. MP4 rendering uses ffmpeg when available and falls back to GIF.
 
 ## Write a controller

@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from swarmbench.api import CircleObstacle, DroneStatus, DroneType, RectangleObstacle, Team
+from swarmbench.api import PHYSICS_DT, CircleObstacle, DroneStatus, DroneType, RectangleObstacle, Team
 
 from .format import Replay, ReplayFrame, reconstruct_frames
 
@@ -63,20 +63,36 @@ def _draw_frame(axis: Any, replay: Replay, frame: ReplayFrame, trails: dict[int,
     axis.set_ylabel("y (m)")
 
 
-def render_replay(replay: Replay, output: str | Path | None = None, *, fps: int = 20) -> Path | None:
+def render_replay(
+    replay: Replay,
+    output: str | Path | None = None,
+    *,
+    fps: int = 10,
+    quality: str = "low",
+) -> Path | None:
     import matplotlib.pyplot as plt
     from matplotlib import animation
 
+    source_fps = round(1 / PHYSICS_DT)
+    if fps not in {5, 10, source_fps}:
+        raise ValueError(f"fps must be one of 5, 10, or {source_fps}")
+    if quality == "low":
+        figure_size, dpi, bitrate = (8, 4.8), 80, 1000
+    elif quality == "high":
+        figure_size, dpi, bitrate = (10, 6), 140, 1800
+    else:
+        raise ValueError("quality must be 'low' or 'high'")
+
     print("Reconstructing replay frames...", flush=True)
-    frames = list(reconstruct_frames(replay))
-    print(f"Prepared {len(frames)} frames.", flush=True)
-    figure, axis = plt.subplots(figsize=(10, 6), constrained_layout=True)
+    frames = list(reconstruct_frames(replay, every_ticks=source_fps // fps))
+    print(f"Prepared {len(frames)} frames at {fps} FPS ({quality} quality).", flush=True)
+    figure, axis = plt.subplots(figsize=figure_size, dpi=dpi, constrained_layout=True)
     trails: dict[int, list[tuple[float, float]]] = {}
     destination = Path(output) if output is not None else None
     if destination is not None and destination.suffix.lower() in {".png", ".jpg", ".jpeg"}:
         print(f"Rendering final frame to {destination}...", flush=True)
         _draw_frame(axis, replay, frames[-1], trails)
-        figure.savefig(destination, dpi=140)
+        figure.savefig(destination, dpi=dpi)
         plt.close(figure)
         print(f"Finished rendering {destination}.", flush=True)
         return destination
@@ -92,7 +108,7 @@ def render_replay(replay: Replay, output: str | Path | None = None, *, fps: int 
         return None
     destination.parent.mkdir(parents=True, exist_ok=True)
     if destination.suffix.lower() == ".mp4" and animation.writers.is_available("ffmpeg"):
-        writer = animation.FFMpegWriter(fps=fps, bitrate=1800)
+        writer = animation.FFMpegWriter(fps=fps, bitrate=bitrate)
     else:
         if destination.suffix.lower() != ".gif":
             destination = destination.with_suffix(".gif")
@@ -110,7 +126,7 @@ def render_replay(replay: Replay, output: str | Path | None = None, *, fps: int 
             last_reported = milestone
             print(f"Rendering progress: {milestone}%", flush=True)
 
-    movie.save(destination, writer=writer, progress_callback=report_progress)
+    movie.save(destination, writer=writer, dpi=dpi, progress_callback=report_progress)
     plt.close(figure)
     print(f"Finished rendering {destination}.", flush=True)
     return destination
