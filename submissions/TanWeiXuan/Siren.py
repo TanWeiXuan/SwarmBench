@@ -1,21 +1,18 @@
-"""Siren: terrain-commitment pursuit traps for SwarmBench.
+"""Siren: conservative terrain-safe swarm control for SwarmBench.
 
 Implementation model: GPT-5.6 Sol Extra High.
 Controller design prompt: GPT-5.6 Sol Pro.
 
-Siren normally uses conservative goal routes and value-aware FAST-for-SLOW
-interceptions.  One SLOW may instead lure one inferred FAST pursuer through a
-pre-verified rectangle-corner manoeuvre.  A small multi-model forward simulator
-springs the turn only when the prepared SLOW remains safe and continuing pursuit
-is predicted to crash or force material braking/rerouting.  One rescue FAST waits
-outside the lure and intervenes only if the pursuer safely recovers.
+Siren uses a conservative visibility roadmap, jerk-aware steering, and an exact
+short-horizon terrain veto.  Every SLOW takes a safe efficient goal route.  Seven
+FAST drones make distinct feasible value-five interceptions while three retain
+independent one-point scoring routes, with collision avoidance for non-targets.
 
 Attribution: the visibility-roadmap/chord-clearance construction and the exact
 jerk-dynamics terrain-veto concept are adapted from the author's earlier
-``TempoTrap.py`` and ``GPT_5_6_Sol_Ultra.py`` submissions.  Siren's trap-site
-geometry, bait state machine, multi-model pursuer simulation, trigger logic,
-outcome classification, and rescue fallback are original to this file.  No
-other controller code or tuned constants were copied.
+``TempoTrap.py`` and ``GPT_5_6_Sol_Ultra.py`` submissions.  The role policy and
+control implementation in this file were independently written.  No other
+controller code or tuned constants were copied.
 """
 
 from __future__ import annotations
@@ -63,7 +60,7 @@ def _dot(left, right):
 
 
 class SwarmController(BaseSwarmController):
-    """Conventional control baseline; rectangle trapping is added incrementally."""
+    """Conservative terrain-safe scoring and value-aware interception."""
 
     PLAN_CLEARANCE = 0.94
     TRACK_CLEARANCE = 0.74
@@ -101,9 +98,9 @@ class SwarmController(BaseSwarmController):
                 self.paths[drone.id] = self._route(drone.position, target)
                 self.path_destination[drone.id] = target
 
-        # Six FAST drones seek distinct feasible enemy SLOWs.  The remaining
-        # four score, so the ordinary policy itself has a one-point endgame.
-        self.hunter_ids = {drone.id for drone in own_fast[:6]}
+        # Seven FAST drones seek distinct feasible enemy SLOWs.  The remaining
+        # three score, so the ordinary policy retains one-point endgame options.
+        self.hunter_ids = {drone.id for drone in own_fast[:7]}
         self.fast_target = {drone.id: None for drone in own_fast}
         self.fast_destination = {drone.id: self.goal_target[drone.id] for drone in own_fast}
         self.last_assignment = -10.0
