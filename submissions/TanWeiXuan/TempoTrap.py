@@ -71,7 +71,7 @@ class SwarmController(BaseSwarmController):
 
     PLAN_CLEARANCE = 0.94
     TRACK_CLEARANCE = 0.74
-    EMERGENCY_CLEARANCE = 0.38
+    EMERGENCY_CLEARANCE = 0.50
     NODE_EPSILON = 0.10
 
     def initialize(self, game_info):
@@ -1201,7 +1201,6 @@ class SwarmController(BaseSwarmController):
             self.last_high_update = state.time
 
         enemy_active = enemy_fast + enemy_slow
-        own_fast_by_id = {drone.id: drone for drone in own_fast}
         actions = {}
         for drone in state.own_drones:
             if drone.status is not DroneStatus.ACTIVE:
