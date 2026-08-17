@@ -45,6 +45,20 @@
     {
       "author": "TanWeiXuan",
       "built_in": false,
+      "controller_id": "TanWeiXuan/Siren",
+      "deviation": 40.65749188317489,
+      "display_name": "Siren",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1843.338637264587,
+      "version_sha": "d9facfa43df94ecb8897dcaf4eb209c6c08be649",
+      "volatility": 0.059999916687621904,
+      "wins": 0
+    },
+    {
+      "author": "TanWeiXuan",
+      "built_in": false,
       "controller_id": "TanWeiXuan/TempoTrap",
       "deviation": 31.560176231828684,
       "display_name": "Tempotrap",
