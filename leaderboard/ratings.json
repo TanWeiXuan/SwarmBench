@@ -45,6 +45,20 @@
     {
       "author": "TanWeiXuan",
       "built_in": false,
+      "controller_id": "TanWeiXuan/TempoTrap",
+      "deviation": 40.57074674461116,
+      "display_name": "Tempotrap",
+      "draws": 0,
+      "games": 0,
+      "losses": 0,
+      "rating": 1923.0977777654605,
+      "version_sha": "3729a151d92d54e77362e1697d4057c711760d9a",
+      "volatility": 0.060001573272469154,
+      "wins": 0
+    },
+    {
+      "author": "TanWeiXuan",
+      "built_in": false,
       "controller_id": "TanWeiXuan/gpt_5_3_codex_spark_extra_high",
       "deviation": 25.84703519957054,
       "display_name": "Gpt 5 3 Codex Spark Extra High",
