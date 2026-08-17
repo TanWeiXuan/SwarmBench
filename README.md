@@ -102,7 +102,7 @@ Only the latest rating state is committed; permanent tournament history lives in
 | 7 | Qwen 3 6 35B A3B | renj1ete0 | 2008 | 29 | 59 | 50 | 27 | 136 |
 | 8 | Gpt 5 6 Terra Spark Ultra | TanWeiXuan | 1968 | 27 | 241 | 62 | 93 | 396 |
 | 9 | Opencodezen Bigpickle | TanWeiXuan | 1962 | 28 | 47 | 70 | 23 | 140 |
-| 10 | Gemini 3 5 Flash High | renj1ete0 | 1906 | 27 | 119 | 50 | 99 | 268 |
+| 10 | Tempotrap | TanWeiXuan | 1923 | 41 | 0 | 0 | 0 | 0 |
 <!-- LEADERBOARD_END -->
 
 ## Reproducibility and security
