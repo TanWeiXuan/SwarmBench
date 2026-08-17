@@ -93,16 +93,16 @@ Only the latest rating state is committed; permanent tournament history lives in
 <!-- LEADERBOARD_START -->
 | Rank | Controller | Author | Rating | RD | W | D | L | Games |
 | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | Claude Opus 5 Apex | renj1ete0 | 2153 | 25 | 192 | 139 | 5 | 336 |
-| 2 | Gpt 5 6 Sol Extra High Aegis Weave | TanWeiXuan | 2106 | 23 | 124 | 203 | 9 | 336 |
-| 3 | Claude Sonnet 5 Max | renj1ete0 | 2075 | 24 | 237 | 170 | 53 | 460 |
-| 4 | Claude Opus 5 Max | renj1ete0 | 2058 | 23 | 231 | 170 | 67 | 468 |
-| 5 | Tempotrap | TanWeiXuan | 2045 | 24 | 105 | 65 | 30 | 200 |
-| 6 | Qwen 3 6 35B A3B V2 | renj1ete0 | 2038 | 22 | 127 | 160 | 57 | 344 |
-| 7 | Gpt 5 6 Sol Ultra | TanWeiXuan | 2028 | 23 | 181 | 119 | 96 | 396 |
-| 8 | Qwen 3 6 35B A3B | renj1ete0 | 2023 | 23 | 141 | 130 | 57 | 328 |
-| 9 | Opencodezen Bigpickle | TanWeiXuan | 1960 | 23 | 110 | 147 | 75 | 332 |
-| 10 | Gpt 5 6 Terra Spark Ultra | TanWeiXuan | 1941 | 23 | 315 | 114 | 159 | 588 |
+| 1 | Claude Opus 5 Apex | renj1ete0 | 2145 | 24 | 219 | 175 | 6 | 400 |
+| 2 | Gpt 5 6 Sol Extra High Aegis Weave | TanWeiXuan | 2118 | 22 | 148 | 241 | 11 | 400 |
+| 3 | Claude Sonnet 5 Max | renj1ete0 | 2082 | 23 | 269 | 198 | 57 | 524 |
+| 4 | Claude Opus 5 Max | renj1ete0 | 2059 | 22 | 254 | 200 | 78 | 532 |
+| 5 | Tempotrap | TanWeiXuan | 2054 | 23 | 128 | 96 | 40 | 264 |
+| 6 | Qwen 3 6 35B A3B V2 | renj1ete0 | 2047 | 22 | 150 | 192 | 66 | 408 |
+| 7 | Gpt 5 6 Sol Ultra | TanWeiXuan | 2034 | 22 | 208 | 144 | 108 | 460 |
+| 8 | Qwen 3 6 35B A3B | renj1ete0 | 2018 | 22 | 162 | 155 | 75 | 392 |
+| 9 | Opencodezen Bigpickle | TanWeiXuan | 1959 | 22 | 136 | 164 | 96 | 396 |
+| 10 | Gpt 5 6 Terra Spark Ultra | TanWeiXuan | 1932 | 22 | 339 | 130 | 183 | 652 |
 <!-- LEADERBOARD_END -->
 
 ## Reproducibility and security
