@@ -78,7 +78,6 @@ class SwarmController(BaseSwarmController):
     TRANSITION_MARGIN = 1.15
     DEADLINE_MARGIN = 4.2
     ACTIVE_BAIT = True
-    NAIVE_GATE = False
 
     def initialize(self, game_info):
         self.team = game_info.team
@@ -552,8 +551,6 @@ class SwarmController(BaseSwarmController):
     def _transition_safe(self, slow, path, enemy_fast, own_slow):
         if not enemy_fast:
             return True
-        if self.NAIVE_GATE:
-            return min(_distance(slow.position, enemy.position) for enemy in enemy_fast) > 18.0
         cover_time = self._path_time(slow, path)
         total_length = max(EPS, self._path_length(slow.position, path))
         for fraction in (0.25, 0.50, 0.75, 1.0):
